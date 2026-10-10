@@ -56,7 +56,7 @@ VERSION_RPM = $$VERSION_RPM"^"$$SUFFIX
     }
 }
 
-TARGET      = OpenRGB
+TARGET      = VryoControl
 TEMPLATE    = app
 
 #-----------------------------------------------------------------------------------------------#

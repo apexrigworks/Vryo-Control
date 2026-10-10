@@ -412,7 +412,7 @@ OpenRGBDialog::OpenRGBDialog(QWidget *parent) : QMainWindow(parent), ui(new Ui::
 
     connect(trayIcon,SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(on_ReShow(QSystemTrayIcon::ActivationReason)));
 
-    trayIcon->setToolTip("OpenRGB");
+    trayIcon->setToolTip("Vryo Control");
     trayIcon->setContextMenu(trayMenu);
 
     /*-----------------------------------------------------*\
