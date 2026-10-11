@@ -144,6 +144,12 @@ DetectedControllers DetectVryoGPUControllers()
 
     for(unsigned int model_idx = 0; model_idx < models.size(); model_idx++)
     {
+        if(!models[model_idx]->has_rgb)
+        {
+            LOG_INFO("[%s] %s has no RGB, not listed", YB_GPU_DETECTOR_NAME, models[model_idx]->name);
+            continue;
+        }
+
         VryoGPUController * controller = port_name.empty()
                                        ? new VryoGPUController()
                                        : new VryoGPUController(port_name);

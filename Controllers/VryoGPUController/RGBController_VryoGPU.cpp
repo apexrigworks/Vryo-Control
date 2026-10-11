@@ -24,6 +24,7 @@
 RGBController_VryoGPU::RGBController_VryoGPU(VryoGPUController* controller_ptr, const VryoModelDef& model)
 {
     controller          = controller_ptr;
+    model_def           = &model;
 
     /*-----------------------------------------------------*\
     | This is where the name you chose is applied           |
@@ -65,24 +66,25 @@ void RGBController_VryoGPU::SetupZones()
     leds.clear();
     colors.clear();
 
-    const unsigned int zone_count = sizeof(YB_GPU_ZONES) / sizeof(YB_GPU_ZONES[0]);
+    const VryoZoneDef * layout     = model_def->layout;
+    const unsigned int  zone_count = model_def->layout_zone_count;
 
     for(unsigned int zone_idx = 0; zone_idx < zone_count; zone_idx++)
     {
         zone new_zone;
 
-        new_zone.name           = YB_GPU_ZONES[zone_idx].name;
+        new_zone.name           = layout[zone_idx].name;
         new_zone.type           = ZONE_TYPE_LINEAR;
-        new_zone.leds_min       = YB_GPU_ZONES[zone_idx].leds;
-        new_zone.leds_max       = YB_GPU_ZONES[zone_idx].leds;
-        new_zone.leds_count     = YB_GPU_ZONES[zone_idx].leds;
+        new_zone.leds_min       = layout[zone_idx].leds;
+        new_zone.leds_max       = layout[zone_idx].leds;
+        new_zone.leds_count     = layout[zone_idx].leds;
 
         zones.push_back(new_zone);
 
-        for(unsigned int led_idx = 0; led_idx < YB_GPU_ZONES[zone_idx].leds; led_idx++)
+        for(unsigned int led_idx = 0; led_idx < layout[zone_idx].leds; led_idx++)
         {
             led new_led;
-            new_led.name = std::string(YB_GPU_ZONES[zone_idx].name) + " LED " + std::to_string(led_idx + 1);
+            new_led.name = std::string(layout[zone_idx].name) + " LED " + std::to_string(led_idx + 1);
 
             leds.push_back(new_led);
         }

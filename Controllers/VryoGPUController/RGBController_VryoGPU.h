@@ -30,4 +30,5 @@ public:
 
 private:
     VryoGPUController*     controller;
+    const VryoModelDef*    model_def;
 };

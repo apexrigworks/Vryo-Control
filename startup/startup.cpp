@@ -12,14 +12,18 @@
 #include "NetworkServer.h"
 #include "startup.h"
 
+#include <algorithm>
+#include <cmath>
+
 #include <QApplication>
-#include <QColor>
-#include <QFont>
-#include <QPainter>
+#include <QElapsedTimer>
 #include <QPixmap>
 #include <QSplashScreen>
+#include <QTimer>
 
 #include "OpenRGBDialog.h"
+#include "DetectionManager.h"
+#include "VryoTheme.h"
 
 #ifdef __APPLE__
 #include "macutils.h"
@@ -97,37 +101,27 @@ int startup(int argc, char* argv[], unsigned int ret_flags)
         LOG_TRACE("[startup] QApplication created");
 
         /*-------------------------------------------------*\
-        | Vryo loading screen, shown while the main window  |
-        | and devices are set up                            |
+        | Vryo dark and blue theme                          |
         \*-------------------------------------------------*/
-        QSplashScreen * splash = nullptr;
+        VryoTheme::Apply(a);
+
+        /*-------------------------------------------------*\
+        | Animated loading screen, shown until the first    |
+        | device scan finishes (or a few seconds pass)      |
+        \*-------------------------------------------------*/
+        QSplashScreen * splash          = nullptr;
+        QTimer *        splash_timer    = nullptr;
+        QElapsedTimer   splash_clock;
+        QPixmap         splash_logo(":vryo_splash_logo.png");
+        bool            splash_seen_scan = false;
+        double          splash_progress  = 0.0;
 
         if(!(ret_flags & RET_FLAG_START_MINIMIZED))
         {
-            QPixmap splash_pixmap(560, 420);
-            splash_pixmap.fill(QColor(8, 8, 10));
-
-            QPainter painter(&splash_pixmap);
-            painter.setRenderHint(QPainter::Antialiasing, true);
-            painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
-            QPixmap logo(":vryo_splash_logo.png");
-            painter.drawPixmap((560 - 200) / 2, 36, logo.scaled(200, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-            painter.setPen(QColor(240, 240, 245));
-            QFont title_font("Segoe UI", 26, QFont::DemiBold);
-            painter.setFont(title_font);
-            painter.drawText(QRect(0, 250, 560, 50), Qt::AlignCenter, "Vryo Control");
-
-            painter.setPen(QColor(140, 140, 150));
-            QFont sub_font("Segoe UI", 10);
-            painter.setFont(sub_font);
-            painter.drawText(QRect(0, 300, 560, 30), Qt::AlignCenter, "RGB lighting control");
-            painter.end();
-
-            splash = new QSplashScreen(splash_pixmap);
+            splash = new QSplashScreen(VryoTheme::PaintSplash(splash_logo, 0.0, 0.0, 0.0, "Starting up..."));
+            splash->setWindowFlag(Qt::WindowStaysOnTopHint, true);
             splash->show();
-            splash->showMessage("Starting up...", Qt::AlignBottom | Qt::AlignHCenter, QColor(170, 170, 180));
+            splash_clock.start();
             a.processEvents();
         }
 
@@ -165,16 +159,85 @@ int startup(int argc, char* argv[], unsigned int ret_flags)
 #endif
             dlg.hide();
         }
-        else
+        else if(splash == nullptr)
         {
             dlg.show();
         }
 
         if(splash != nullptr)
         {
-            splash->finish(&dlg);
-            delete splash;
-            splash = nullptr;
+            /*---------------------------------------------*\
+            | The main window stays hidden (it is not shown |
+            | above) while the splash animates, then shown  |
+            \*---------------------------------------------*/
+            splash_timer = new QTimer(&a);
+            splash_timer->setInterval(16);
+
+            QObject::connect(splash_timer, &QTimer::timeout, [&]()
+            {
+                const qint64        elapsed_ms  = splash_clock.elapsed();
+                const unsigned int  percent     = DetectionManager::get()->GetDetectionPercent();
+
+                if(percent < 100)
+                {
+                    splash_seen_scan = true;
+                }
+
+                /*-----------------------------------------*\
+                | Finished when the scan is done, but never |
+                | before 1.5 s (so it is readable) and never|
+                | after 12 s (so it cannot get stuck)       |
+                \*-----------------------------------------*/
+                const bool scan_done    = splash_seen_scan && (percent >= 100);
+                const bool no_scan_seen = !splash_seen_scan && (elapsed_ms >= 2500);
+                const bool finished     = (elapsed_ms >= 1500) && (scan_done || no_scan_seen || (elapsed_ms >= 12000));
+
+                /*-----------------------------------------*\
+                | Smooth bar: eases toward 90 % over time,  |
+                | follows the real scan if it is further on |
+                \*-----------------------------------------*/
+                double target = 0.9 * (1.0 - std::exp(-(double)elapsed_ms / 2200.0));
+
+                if(splash_seen_scan)
+                {
+                    target = std::max(target, 0.9 * ((double)percent / 100.0));
+                }
+
+                if(finished)
+                {
+                    target = 1.0;
+                }
+
+                splash_progress += (target - splash_progress) * 0.12;
+
+                if(finished && (splash_progress > 0.985))
+                {
+                    splash_timer->stop();
+                    dlg.show();
+                    splash->finish(&dlg);
+                    delete splash;
+                    splash = nullptr;
+                    return;
+                }
+
+                const double angle  = std::fmod((double)elapsed_ms * 0.36, 360.0);
+                const double phase  = std::fmod((double)elapsed_ms / 1100.0, 1.0);
+
+                QString message = "Starting up...";
+
+                if(splash_seen_scan && (percent < 100))
+                {
+                    message = "Detecting devices...";
+                }
+                else if(finished || (splash_progress > 0.8))
+                {
+                    message = "Almost ready...";
+                }
+
+                splash->setPixmap(VryoTheme::PaintSplash(splash_logo, angle, splash_progress, phase, message));
+            });
+
+            splash_timer->start();
         }
 
         LOG_TRACE("[main] Ready to exec() the dialog");

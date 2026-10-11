@@ -20,32 +20,68 @@
 #define YB_GPU_VERSION          "0.1"
 
 /*---------------------------------------------------------*\
+| LED layouts. A layout is a list of zones, in the order    |
+| the LEDs are wired. Each zone becomes one zone in Vryo    |
+| Control with that many LEDs.                              |
+|                                                           |
+| ALL OF THESE ARE PLACEHOLDERS until the real card designs |
+| are decided. To change one, edit the numbers here. To     |
+| give a model its own layout, add a new layout below and   |
+| point that model at it.                                   |
+\*---------------------------------------------------------*/
+struct VryoZoneDef
+{
+    const char*     name;
+    unsigned int    leds;
+};
+
+static const VryoZoneDef YB_LAYOUT_DEFAULT[] =
+{
+    { "Fan 1",          12 },
+    { "Fan 2",          12 },
+    { "Shroud Strip",   20 },
+};
+
+#define YB_ZONE_COUNT(layout)   ((unsigned int)(sizeof(layout) / sizeof((layout)[0])))
+
+/*---------------------------------------------------------*\
 | Product models. Device names are series + GPU only (no    |
 | brand name in them), like iCUE showing "K70" not          |
 | "Corsair K70". The vendor field above carries the brand.  |
 |                                                           |
-|   id      short id you can put in OpenRGB.json            |
-|   name    exactly what Vryo Control shows for the card    |
+|   id        short id you can put in OpenRGB.json          |
+|   name      exactly what Vryo Control shows for the card  |
+|   has_rgb   false = this card has no lighting, so it is   |
+|             never listed in the app                       |
+|   layout    which LED layout the card uses (see above)    |
+|                                                           |
+| has_rgb is true for every card for now. Set it to false   |
+| for any card that ships without RGB.                      |
 \*---------------------------------------------------------*/
 struct VryoModelDef
 {
-    const char*     id;
-    const char*     name;
+    const char*             id;
+    const char*             name;
+    bool                    has_rgb;
+    const VryoZoneDef*      layout;
+    unsigned int            layout_zone_count;
 };
+
+#define YB_MODEL(id, name, has_rgb, layout)     { id, name, has_rgb, layout, YB_ZONE_COUNT(layout) }
 
 static const VryoModelDef YB_GPU_MODELS[] =
 {
-    { "frost-1650",         "Frost GTX 1650 4GB"            },
-    { "frost-1650-super",   "Frost GTX 1650 Super 4GB"      },
-    { "glacier-1660",       "Glacier GTX 1660 6GB"          },
-    { "glacier-1660-super", "Glacier GTX 1660 Super 6GB"    },
-    { "glacier-1660-ti",    "Glacier GTX 1660 Ti 6GB"       },
-    { "nova-2060",          "Nova RTX 2060 6GB"             },
-    { "nova-2060-super",    "Nova RTX 2060 Super 8GB"       },
-    { "nova-3050",          "Nova RTX 3050 8GB"             },
-    { "lumen-3060",         "Lumen RTX 3060 12GB"           },
-    { "halo-5050",          "Halo RTX 5050 8GB"             },
-    { "halo-5060",          "Halo RTX 5060 8GB"             },
+    YB_MODEL("frost-1650",          "Frost GTX 1650 4GB",           true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("frost-1650-super",    "Frost GTX 1650 Super 4GB",     true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("glacier-1660",        "Glacier GTX 1660 6GB",         true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("glacier-1660-super",  "Glacier GTX 1660 Super 6GB",   true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("glacier-1660-ti",     "Glacier GTX 1660 Ti 6GB",      true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("nova-2060",           "Nova RTX 2060 6GB",            true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("nova-2060-super",     "Nova RTX 2060 Super 8GB",      true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("nova-3050",           "Nova RTX 3050 8GB",            true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("lumen-3060",          "Lumen RTX 3060 12GB",          true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("halo-5050",           "Halo RTX 5050 8GB",            true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("halo-5060",           "Halo RTX 5060 8GB",            true, YB_LAYOUT_DEFAULT),
 };
 
 /*---------------------------------------------------------*\
@@ -69,24 +105,6 @@ static const VryoModelDef YB_GPU_MODELS[] =
 | sends them nowhere. Useful for testing with no hardware.  |
 \*---------------------------------------------------------*/
 #define YB_GPU_SETTINGS_KEY     "VryoGPU"
-
-/*---------------------------------------------------------*\
-| LED layout, in the order the LEDs are wired. These are    |
-| PLACEHOLDERS: change the zone names and LED counts to     |
-| match your shroud. Each entry becomes one zone in OpenRGB.|
-\*---------------------------------------------------------*/
-struct VryoZoneDef
-{
-    const char*     name;
-    unsigned int    leds;
-};
-
-static const VryoZoneDef YB_GPU_ZONES[] =
-{
-    { "Fan 1",          12 },
-    { "Fan 2",          12 },
-    { "Shroud Strip",   20 },
-};
 
 /*---------------------------------------------------------*\
 | Serial link to your controller board (RP2040 / Arduino /  |

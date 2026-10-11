@@ -39,6 +39,21 @@ using namespace std::chrono_literals;
 const char* DETECTIONMANAGER = "DetectionManager";
 
 /*---------------------------------------------------------*\
+| Vryo Control only enables Vryo detectors by default.      |
+| Detectors from the original OpenRGB project stay off      |
+| until they are ticked on the Supported Devices page.      |
+\*---------------------------------------------------------*/
+static bool VryoDefaultEnabled(const std::string& detector_name, bool original_default)
+{
+    if(detector_name.rfind("Vryo", 0) == 0)
+    {
+        return(original_default);
+    }
+
+    return(false);
+}
+
+/*---------------------------------------------------------*\
 | Upper bound for WaitForDetection(), in milliseconds       |
 \*---------------------------------------------------------*/
 #define DETECTION_WAIT_TIMEOUT_MS   60000
@@ -942,7 +957,7 @@ void DetectionManager::BackgroundDetectDevices()
     | If any i2c interfaces failed to detect due to an      |
     | error condition, show a dialog                        |
     \*-----------------------------------------------------*/
-    if(i2c_interface_fail)
+    if(i2c_interface_fail && JsonUtils::JsonGetBool(detector_settings, "show_i2c_warning", false))
     {
 #ifdef _WIN32
         LOG_DIALOG("%s", I2C_ERR_WIN);
@@ -1817,7 +1832,7 @@ void DetectionManager::UpdateDetectorSettings()
 
         if(!(detector_settings.contains("detectors") && detector_settings["detectors"].contains(detection_string)))
         {
-            detector_settings["detectors"][detection_string] = i2c_device_detector_default_enabled[i2c_detector_idx];
+            detector_settings["detectors"][detection_string] = VryoDefaultEnabled(detection_string, i2c_device_detector_default_enabled[i2c_detector_idx]);
             save_settings = true;
         }
     }
@@ -1832,7 +1847,7 @@ void DetectionManager::UpdateDetectorSettings()
 
         if(!(detector_settings.contains("detectors") && detector_settings["detectors"].contains(detection_string)))
         {
-            detector_settings["detectors"][detection_string] = i2c_dram_device_detectors[i2c_detector_idx].enabled_by_default;
+            detector_settings["detectors"][detection_string] = VryoDefaultEnabled(detection_string, i2c_dram_device_detectors[i2c_detector_idx].enabled_by_default);
             save_settings = true;
         }
     }
@@ -1847,7 +1862,7 @@ void DetectionManager::UpdateDetectorSettings()
 
         if(!(detector_settings.contains("detectors") && detector_settings["detectors"].contains(detection_string)))
         {
-            detector_settings["detectors"][detection_string] = i2c_pci_device_detectors[i2c_pci_detector_idx].enabled_by_default;
+            detector_settings["detectors"][detection_string] = VryoDefaultEnabled(detection_string, i2c_pci_device_detectors[i2c_pci_detector_idx].enabled_by_default);
             save_settings = true;
         }
     }
@@ -1862,7 +1877,7 @@ void DetectionManager::UpdateDetectorSettings()
 
         if(!(detector_settings.contains("detectors") && detector_settings["detectors"].contains(detection_string)))
         {
-            detector_settings["detectors"][detection_string] = hid_generic_detectors[hid_detector_idx].enabled_by_default;
+            detector_settings["detectors"][detection_string] = VryoDefaultEnabled(detection_string, hid_generic_detectors[hid_detector_idx].enabled_by_default);
             save_settings = true;
         }
     }
@@ -1877,7 +1892,7 @@ void DetectionManager::UpdateDetectorSettings()
 
         if(!(detector_settings.contains("detectors") && detector_settings["detectors"].contains(detection_string)))
         {
-            detector_settings["detectors"][detection_string] = hid_specific_detectors[hid_detector_idx].enabled_by_default;
+            detector_settings["detectors"][detection_string] = VryoDefaultEnabled(detection_string, hid_specific_detectors[hid_detector_idx].enabled_by_default);
             save_settings = true;
         }
     }
@@ -1892,7 +1907,7 @@ void DetectionManager::UpdateDetectorSettings()
 
         if(!(detector_settings.contains("detectors") && detector_settings["detectors"].contains(detection_string)))
         {
-            detector_settings["detectors"][detection_string] = hid_wrapped_generic_detectors[hid_wrapped_detector_idx].enabled_by_default;
+            detector_settings["detectors"][detection_string] = VryoDefaultEnabled(detection_string, hid_wrapped_generic_detectors[hid_wrapped_detector_idx].enabled_by_default);
             save_settings = true;
         }
     }
@@ -1907,7 +1922,7 @@ void DetectionManager::UpdateDetectorSettings()
 
         if(!(detector_settings.contains("detectors") && detector_settings["detectors"].contains(detection_string)))
         {
-            detector_settings["detectors"][detection_string] = hid_wrapped_specific_detectors[hid_wrapped_detector_idx].enabled_by_default;
+            detector_settings["detectors"][detection_string] = VryoDefaultEnabled(detection_string, hid_wrapped_specific_detectors[hid_wrapped_detector_idx].enabled_by_default);
             save_settings = true;
         }
     }
@@ -1922,7 +1937,7 @@ void DetectionManager::UpdateDetectorSettings()
 
         if(!(detector_settings.contains("detectors") && detector_settings["detectors"].contains(detection_string)))
         {
-            detector_settings["detectors"][detection_string] = device_detector_default_enabled[detector_idx];
+            detector_settings["detectors"][detection_string] = VryoDefaultEnabled(detection_string, device_detector_default_enabled[detector_idx]);
             save_settings = true;
         }
     }
