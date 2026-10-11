@@ -21,16 +21,16 @@
     @comment Custom GPU lighting board. Virtual mode when no serial port is configured.
 \*-------------------------------------------------------------------*/
 
-RGBController_VryoGPU::RGBController_VryoGPU(VryoGPUController* controller_ptr)
+RGBController_VryoGPU::RGBController_VryoGPU(VryoGPUController* controller_ptr, const VryoModelDef& model)
 {
     controller          = controller_ptr;
 
     /*-----------------------------------------------------*\
     | This is where the name you chose is applied           |
     \*-----------------------------------------------------*/
-    name                = YB_GPU_DEVICE_NAME;
+    name                = model.name;
     vendor              = YB_GPU_VENDOR;
-    description         = YB_GPU_DESCRIPTION;
+    description         = std::string(YB_GPU_VENDOR) + " " + model.name + " Graphics Card";
     version             = YB_GPU_VERSION;
     type                = DEVICE_TYPE_GPU;
     location            = controller->GetLocation();

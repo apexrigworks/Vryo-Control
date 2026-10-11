@@ -9,12 +9,13 @@
 #pragma once
 
 #include "RGBController.h"
+#include "VryoGPUConfig.h"
 #include "VryoGPUController.h"
 
 class RGBController_VryoGPU : public RGBController
 {
 public:
-    RGBController_VryoGPU(VryoGPUController* controller_ptr);
+    RGBController_VryoGPU(VryoGPUController* controller_ptr, const VryoModelDef& model);
     ~RGBController_VryoGPU();
 
     void        SetupZones();
