@@ -30,6 +30,15 @@
 namespace VryoTheme
 {
     /*-----------------------------------------------------*\
+    | Colour from a "#RRGGBB" string. Written out in full so |
+    | it never depends on implicit char* to QString casts.  |
+    \*-----------------------------------------------------*/
+    inline QColor HexColor(const char * hex)
+    {
+        return(QColor(QString::fromLatin1(hex)));
+    }
+
+    /*-----------------------------------------------------*\
     | COLOURS: edit these to match the website              |
     \*-----------------------------------------------------*/
     // Sampled from the apexrigworks.co.uk home page: near-black page,
@@ -53,12 +62,12 @@ namespace VryoTheme
     {
         QPalette palette;
 
-        const QColor background(COLOR_BACKGROUND);
-        const QColor panel(COLOR_PANEL);
-        const QColor surface(COLOR_SURFACE);
-        const QColor text(COLOR_TEXT);
-        const QColor muted(COLOR_MUTED);
-        const QColor accent(COLOR_ACCENT);
+        const QColor background = HexColor(COLOR_BACKGROUND);
+        const QColor panel = HexColor(COLOR_PANEL);
+        const QColor surface = HexColor(COLOR_SURFACE);
+        const QColor text = HexColor(COLOR_TEXT);
+        const QColor muted = HexColor(COLOR_MUTED);
+        const QColor accent = HexColor(COLOR_ACCENT);
 
         palette.setColor(QPalette::Window,           background);
         palette.setColor(QPalette::WindowText,       text);
@@ -69,22 +78,22 @@ namespace VryoTheme
         palette.setColor(QPalette::Text,             text);
         palette.setColor(QPalette::Button,           surface);
         palette.setColor(QPalette::ButtonText,       text);
-        palette.setColor(QPalette::BrightText,       QColor("#FFFFFF"));
-        palette.setColor(QPalette::Link,             QColor(COLOR_ACCENT_LIGHT));
+        palette.setColor(QPalette::BrightText,       HexColor("#FFFFFF"));
+        palette.setColor(QPalette::Link,             HexColor(COLOR_ACCENT_LIGHT));
         palette.setColor(QPalette::Highlight,        accent);
-        palette.setColor(QPalette::HighlightedText,  QColor("#FFFFFF"));
+        palette.setColor(QPalette::HighlightedText,  HexColor("#FFFFFF"));
         palette.setColor(QPalette::PlaceholderText,  muted);
 
-        palette.setColor(QPalette::Light,            QColor(COLOR_BORDER).lighter(130));
-        palette.setColor(QPalette::Midlight,         QColor(COLOR_BORDER));
-        palette.setColor(QPalette::Mid,              QColor(COLOR_BORDER).darker(130));
+        palette.setColor(QPalette::Light,            HexColor(COLOR_BORDER).lighter(130));
+        palette.setColor(QPalette::Midlight,         HexColor(COLOR_BORDER));
+        palette.setColor(QPalette::Mid,              HexColor(COLOR_BORDER).darker(130));
         palette.setColor(QPalette::Dark,             background.darker(150));
-        palette.setColor(QPalette::Shadow,           QColor("#000000"));
+        palette.setColor(QPalette::Shadow,           HexColor("#000000"));
 
         palette.setColor(QPalette::Disabled, QPalette::WindowText,  muted);
         palette.setColor(QPalette::Disabled, QPalette::Text,        muted);
         palette.setColor(QPalette::Disabled, QPalette::ButtonText,  muted);
-        palette.setColor(QPalette::Disabled, QPalette::Highlight,   QColor(COLOR_BORDER));
+        palette.setColor(QPalette::Disabled, QPalette::Highlight,   HexColor(COLOR_BORDER));
 
         return(palette);
     }
@@ -131,15 +140,15 @@ namespace VryoTheme
             "QProgressBar::chunk { background-color: %ACCENT%; border-radius: 4px; }"
         );
 
-        css.replace("%BACKGROUND%",    COLOR_BACKGROUND);
-        css.replace("%PANEL%",         COLOR_PANEL);
-        css.replace("%SURFACE%",       COLOR_SURFACE);
-        css.replace("%BORDER%",        COLOR_BORDER);
-        css.replace("%TEXT%",          COLOR_TEXT);
-        css.replace("%MUTED%",         COLOR_MUTED);
-        css.replace("%ACCENT_LIGHT%",  COLOR_ACCENT_LIGHT);
-        css.replace("%ACCENT_DARK%",   COLOR_ACCENT_DARK);
-        css.replace("%ACCENT%",        COLOR_ACCENT);
+        css.replace(QStringLiteral("%BACKGROUND%"), QString::fromLatin1(COLOR_BACKGROUND));
+        css.replace(QStringLiteral("%PANEL%"), QString::fromLatin1(COLOR_PANEL));
+        css.replace(QStringLiteral("%SURFACE%"), QString::fromLatin1(COLOR_SURFACE));
+        css.replace(QStringLiteral("%BORDER%"), QString::fromLatin1(COLOR_BORDER));
+        css.replace(QStringLiteral("%TEXT%"), QString::fromLatin1(COLOR_TEXT));
+        css.replace(QStringLiteral("%MUTED%"), QString::fromLatin1(COLOR_MUTED));
+        css.replace(QStringLiteral("%ACCENT_LIGHT%"), QString::fromLatin1(COLOR_ACCENT_LIGHT));
+        css.replace(QStringLiteral("%ACCENT_DARK%"), QString::fromLatin1(COLOR_ACCENT_DARK));
+        css.replace(QStringLiteral("%ACCENT%"), QString::fromLatin1(COLOR_ACCENT));
 
         return(css);
     }
@@ -149,7 +158,7 @@ namespace VryoTheme
     \*-----------------------------------------------------*/
     inline void Apply(QApplication& app)
     {
-        QStyle * fusion = QStyleFactory::create("Fusion");
+        QStyle * fusion = QStyleFactory::create(QStringLiteral("Fusion"));
 
         if(fusion != nullptr)
         {
@@ -181,18 +190,18 @@ namespace VryoTheme
         painter.setRenderHint(QPainter::TextAntialiasing, true);
         painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-        const QColor accent(COLOR_ACCENT);
-        const QColor accent_light(COLOR_ACCENT_LIGHT);
+        const QColor accent = HexColor(COLOR_ACCENT);
+        const QColor accent_light = HexColor(COLOR_ACCENT_LIGHT);
 
         /*-------------------------------------------------*\
         | Background and border                             |
         \*-------------------------------------------------*/
         QLinearGradient background(0, 0, 0, height);
-        background.setColorAt(0.0, QColor(COLOR_HERO));
-        background.setColorAt(1.0, QColor(COLOR_BACKGROUND));
+        background.setColorAt(0.0, HexColor(COLOR_HERO));
+        background.setColorAt(1.0, HexColor(COLOR_BACKGROUND));
         painter.fillRect(QRectF(0, 0, width, height), background);
 
-        painter.setPen(QPen(QColor(COLOR_BORDER), 1.0));
+        painter.setPen(QPen(HexColor(COLOR_BORDER), 1.0));
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(QRectF(0.5, 0.5, width - 1.0, height - 1.0));
 
@@ -227,7 +236,7 @@ namespace VryoTheme
         const qreal ring_radius = 100.0;
         QRectF      ring_rect(centre.x() - ring_radius, centre.y() - ring_radius, ring_radius * 2.0, ring_radius * 2.0);
 
-        QColor ring_faint(COLOR_BORDER);
+        QColor ring_faint = HexColor(COLOR_BORDER);
         painter.setBrush(Qt::NoBrush);
         painter.setPen(QPen(ring_faint, 2.0));
         painter.drawEllipse(ring_rect);
@@ -255,15 +264,15 @@ namespace VryoTheme
         /*-------------------------------------------------*\
         | Title and subtitle                                |
         \*-------------------------------------------------*/
-        painter.setPen(QColor(COLOR_TEXT));
-        QFont title_font("Segoe UI", 24, QFont::DemiBold);
+        painter.setPen(HexColor(COLOR_TEXT));
+        QFont title_font(QStringLiteral("Segoe UI"), 24, QFont::DemiBold);
         painter.setFont(title_font);
-        painter.drawText(QRectF(0, 262, width, 44), Qt::AlignCenter, "Vryo Control");
+        painter.drawText(QRectF(0, 262, width, 44), Qt::AlignCenter, QStringLiteral("Vryo Control"));
 
-        painter.setPen(QColor(COLOR_MUTED));
-        QFont sub_font("Segoe UI", 10);
+        painter.setPen(HexColor(COLOR_MUTED));
+        QFont sub_font(QStringLiteral("Segoe UI"), 10);
         painter.setFont(sub_font);
-        painter.drawText(QRectF(0, 304, width, 24), Qt::AlignCenter, "RGB lighting control");
+        painter.drawText(QRectF(0, 304, width, 24), Qt::AlignCenter, QStringLiteral("RGB lighting control"));
 
         /*-------------------------------------------------*\
         | Progress bar with a moving shimmer                |
@@ -273,7 +282,7 @@ namespace VryoTheme
         const QRectF track((width - bar_width) / 2.0, 350.0, bar_width, bar_height);
 
         painter.setPen(Qt::NoPen);
-        painter.setBrush(QColor(COLOR_SURFACE));
+        painter.setBrush(HexColor(COLOR_SURFACE));
         painter.drawRoundedRect(track, bar_height / 2.0, bar_height / 2.0);
 
         double clamped = std::max(0.0, std::min(1.0, progress));
@@ -281,7 +290,7 @@ namespace VryoTheme
         fill.setWidth(std::max(bar_height, track.width() * clamped));
 
         QLinearGradient fill_gradient(fill.left(), 0, fill.right(), 0);
-        fill_gradient.setColorAt(0.0, QColor(COLOR_ACCENT_DARK));
+        fill_gradient.setColorAt(0.0, HexColor(COLOR_ACCENT_DARK));
         fill_gradient.setColorAt(1.0, accent_light);
         painter.setBrush(fill_gradient);
         painter.drawRoundedRect(fill, bar_height / 2.0, bar_height / 2.0);
@@ -302,8 +311,8 @@ namespace VryoTheme
         /*-------------------------------------------------*\
         | Status message                                    |
         \*-------------------------------------------------*/
-        painter.setPen(QColor(COLOR_MUTED));
-        QFont msg_font("Segoe UI", 9);
+        painter.setPen(HexColor(COLOR_MUTED));
+        QFont msg_font(QStringLiteral("Segoe UI"), 9);
         painter.setFont(msg_font);
         painter.drawText(QRectF(0, 366, width, 24), Qt::AlignCenter, message);
 

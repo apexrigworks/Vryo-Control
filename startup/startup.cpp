@@ -97,7 +97,7 @@ int startup(int argc, char* argv[], unsigned int ret_flags)
         \*-------------------------------------------------*/
         QApplication a(argc, argv);
         QGuiApplication::setDesktopFileName("org.openrgb.OpenRGB");
-        QGuiApplication::setApplicationDisplayName("Vryo Control");
+        QGuiApplication::setApplicationDisplayName(QStringLiteral("Vryo Control"));
         LOG_TRACE("[startup] QApplication created");
 
         /*-------------------------------------------------*\
@@ -112,13 +112,13 @@ int startup(int argc, char* argv[], unsigned int ret_flags)
         QSplashScreen * splash          = nullptr;
         QTimer *        splash_timer    = nullptr;
         QElapsedTimer   splash_clock;
-        QPixmap         splash_logo(":vryo_splash_logo.png");
+        QPixmap         splash_logo(QStringLiteral(":vryo_splash_logo.png"));
         bool            splash_seen_scan = false;
         double          splash_progress  = 0.0;
 
         if(!(ret_flags & RET_FLAG_START_MINIMIZED))
         {
-            splash = new QSplashScreen(VryoTheme::PaintSplash(splash_logo, 0.0, 0.0, 0.0, "Starting up..."));
+            splash = new QSplashScreen(VryoTheme::PaintSplash(splash_logo, 0.0, 0.0, 0.0, QStringLiteral("Starting up...")));
             splash->setWindowFlag(Qt::WindowStaysOnTopHint, true);
             splash->show();
             splash_clock.start();
@@ -223,15 +223,15 @@ int startup(int argc, char* argv[], unsigned int ret_flags)
                 const double angle  = std::fmod((double)elapsed_ms * 0.36, 360.0);
                 const double phase  = std::fmod((double)elapsed_ms / 1100.0, 1.0);
 
-                QString message = "Starting up...";
+                QString message = QStringLiteral("Starting up...");
 
                 if(splash_seen_scan && (percent < 100))
                 {
-                    message = "Detecting devices...";
+                    message = QStringLiteral("Detecting devices...");
                 }
                 else if(finished || (splash_progress > 0.8))
                 {
-                    message = "Almost ready...";
+                    message = QStringLiteral("Almost ready...");
                 }
 
                 splash->setPixmap(VryoTheme::PaintSplash(splash_logo, angle, splash_progress, phase, message));
