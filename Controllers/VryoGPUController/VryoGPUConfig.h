@@ -55,8 +55,8 @@ static const VryoZoneDef YB_LAYOUT_DEFAULT[] =
 |             never listed in the app                       |
 |   layout    which LED layout the card uses (see above)    |
 |                                                           |
-| has_rgb is true for every card for now. Set it to false   |
-| for any card that ships without RGB.                      |
+| Frost and Glacier cards ship without RGB (false). Nova,   |
+| Lumen and Halo cards have RGB (true).                     |
 \*---------------------------------------------------------*/
 struct VryoModelDef
 {
@@ -71,11 +71,11 @@ struct VryoModelDef
 
 static const VryoModelDef YB_GPU_MODELS[] =
 {
-    YB_MODEL("frost-1650",          "Frost GTX 1650 4GB",           true, YB_LAYOUT_DEFAULT),
-    YB_MODEL("frost-1650-super",    "Frost GTX 1650 Super 4GB",     true, YB_LAYOUT_DEFAULT),
-    YB_MODEL("glacier-1660",        "Glacier GTX 1660 6GB",         true, YB_LAYOUT_DEFAULT),
-    YB_MODEL("glacier-1660-super",  "Glacier GTX 1660 Super 6GB",   true, YB_LAYOUT_DEFAULT),
-    YB_MODEL("glacier-1660-ti",     "Glacier GTX 1660 Ti 6GB",      true, YB_LAYOUT_DEFAULT),
+    YB_MODEL("frost-1650",          "Frost GTX 1650 4GB",           false, YB_LAYOUT_DEFAULT),
+    YB_MODEL("frost-1650-super",    "Frost GTX 1650 Super 4GB",     false, YB_LAYOUT_DEFAULT),
+    YB_MODEL("glacier-1660",        "Glacier GTX 1660 6GB",         false, YB_LAYOUT_DEFAULT),
+    YB_MODEL("glacier-1660-super",  "Glacier GTX 1660 Super 6GB",   false, YB_LAYOUT_DEFAULT),
+    YB_MODEL("glacier-1660-ti",     "Glacier GTX 1660 Ti 6GB",      false, YB_LAYOUT_DEFAULT),
     YB_MODEL("nova-2060",           "Nova RTX 2060 6GB",            true, YB_LAYOUT_DEFAULT),
     YB_MODEL("nova-2060-super",     "Nova RTX 2060 Super 8GB",      true, YB_LAYOUT_DEFAULT),
     YB_MODEL("nova-3050",           "Nova RTX 3050 8GB",            true, YB_LAYOUT_DEFAULT),
@@ -87,7 +87,7 @@ static const VryoModelDef YB_GPU_MODELS[] =
 /*---------------------------------------------------------*\
 | Model used when OpenRGB.json does not name one            |
 \*---------------------------------------------------------*/
-#define YB_GPU_DEFAULT_MODEL    "glacier-1660-super"
+#define YB_GPU_DEFAULT_MODEL    "nova-2060"
 
 /*---------------------------------------------------------*\
 | The string shown on the "Supported Devices" settings page |
