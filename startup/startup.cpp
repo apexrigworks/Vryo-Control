@@ -13,6 +13,11 @@
 #include "startup.h"
 
 #include <QApplication>
+#include <QColor>
+#include <QFont>
+#include <QPainter>
+#include <QPixmap>
+#include <QSplashScreen>
 
 #include "OpenRGBDialog.h"
 
@@ -88,7 +93,43 @@ int startup(int argc, char* argv[], unsigned int ret_flags)
         \*-------------------------------------------------*/
         QApplication a(argc, argv);
         QGuiApplication::setDesktopFileName("org.openrgb.OpenRGB");
+        QGuiApplication::setApplicationDisplayName("Vryo Control");
         LOG_TRACE("[startup] QApplication created");
+
+        /*-------------------------------------------------*\
+        | Vryo loading screen, shown while the main window  |
+        | and devices are set up                            |
+        \*-------------------------------------------------*/
+        QSplashScreen * splash = nullptr;
+
+        if(!(ret_flags & RET_FLAG_START_MINIMIZED))
+        {
+            QPixmap splash_pixmap(560, 420);
+            splash_pixmap.fill(QColor(8, 8, 10));
+
+            QPainter painter(&splash_pixmap);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+            QPixmap logo(":vryo_splash_logo.png");
+            painter.drawPixmap((560 - 200) / 2, 36, logo.scaled(200, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+            painter.setPen(QColor(240, 240, 245));
+            QFont title_font("Segoe UI", 26, QFont::DemiBold);
+            painter.setFont(title_font);
+            painter.drawText(QRect(0, 250, 560, 50), Qt::AlignCenter, "Vryo Control");
+
+            painter.setPen(QColor(140, 140, 150));
+            QFont sub_font("Segoe UI", 10);
+            painter.setFont(sub_font);
+            painter.drawText(QRect(0, 300, 560, 30), Qt::AlignCenter, "RGB lighting control");
+            painter.end();
+
+            splash = new QSplashScreen(splash_pixmap);
+            splash->show();
+            splash->showMessage("Starting up...", Qt::AlignBottom | Qt::AlignHCenter, QColor(170, 170, 180));
+            a.processEvents();
+        }
 
         /*-------------------------------------------------*\
         | Main UI widget                                    |
@@ -127,6 +168,13 @@ int startup(int argc, char* argv[], unsigned int ret_flags)
         else
         {
             dlg.show();
+        }
+
+        if(splash != nullptr)
+        {
+            splash->finish(&dlg);
+            delete splash;
+            splash = nullptr;
         }
 
         LOG_TRACE("[main] Ready to exec() the dialog");
