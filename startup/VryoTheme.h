@@ -32,15 +32,19 @@ namespace VryoTheme
     /*-----------------------------------------------------*\
     | COLOURS: edit these to match the website              |
     \*-----------------------------------------------------*/
-    static const char * COLOR_BACKGROUND    = "#0A0F1E";    // window background
-    static const char * COLOR_PANEL         = "#101830";    // panels, list areas
-    static const char * COLOR_SURFACE       = "#17213F";    // buttons, inputs, raised parts
-    static const char * COLOR_BORDER        = "#25335C";    // outlines
-    static const char * COLOR_TEXT          = "#E8EEFF";    // main text
-    static const char * COLOR_MUTED         = "#8C99BD";    // secondary text, disabled
-    static const char * COLOR_ACCENT        = "#3B82F6";    // main blue
-    static const char * COLOR_ACCENT_LIGHT  = "#6BA2FF";    // hover / highlights
-    static const char * COLOR_ACCENT_DARK   = "#2563EB";    // pressed
+    // Sampled from the apexrigworks.co.uk home page: near-black page,
+    // deep indigo hero. The accent is a brighter blue of that same hue
+    // so it stays readable on dark surfaces.
+    static const char * COLOR_BACKGROUND    = "#0D0E12";    // window background (site page colour)
+    static const char * COLOR_PANEL         = "#14161D";    // panels, list areas
+    static const char * COLOR_SURFACE       = "#1C1F2C";    // buttons, inputs, raised parts
+    static const char * COLOR_BORDER        = "#2B2F4D";    // outlines
+    static const char * COLOR_TEXT          = "#F2F4FF";    // main text
+    static const char * COLOR_MUTED         = "#8A8FA8";    // secondary text, disabled
+    static const char * COLOR_ACCENT        = "#4A55F5";    // main blue
+    static const char * COLOR_ACCENT_LIGHT  = "#7C86FF";    // hover / highlights
+    static const char * COLOR_ACCENT_DARK   = "#2F38C9";    // pressed
+    static const char * COLOR_HERO          = "#01075D";    // deep indigo (site hero), splash top
 
     /*-----------------------------------------------------*\
     | Qt palette: this is what most of the window uses      |
@@ -94,7 +98,7 @@ namespace VryoTheme
         QString css = QStringLiteral(
             "QToolTip { color: %TEXT%; background-color: %SURFACE%; border: 1px solid %ACCENT%; padding: 4px; }"
 
-            "QPushButton { background-color: %SURFACE%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 6px; padding: 5px 12px; }"
+            "QPushButton { background-color: %SURFACE%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 10px; padding: 5px 14px; }"
             "QPushButton:hover { border-color: %ACCENT%; background-color: %PANEL%; }"
             "QPushButton:pressed { background-color: %ACCENT_DARK%; border-color: %ACCENT_DARK%; color: #FFFFFF; }"
             "QPushButton:disabled { color: %MUTED%; border-color: %BORDER%; background-color: %PANEL%; }"
@@ -184,7 +188,7 @@ namespace VryoTheme
         | Background and border                             |
         \*-------------------------------------------------*/
         QLinearGradient background(0, 0, 0, height);
-        background.setColorAt(0.0, QColor("#0E1634"));
+        background.setColorAt(0.0, QColor(COLOR_HERO));
         background.setColorAt(1.0, QColor(COLOR_BACKGROUND));
         painter.fillRect(QRectF(0, 0, width, height), background);
 

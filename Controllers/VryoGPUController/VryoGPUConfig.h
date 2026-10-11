@@ -24,7 +24,8 @@
 | the LEDs are wired. Each zone becomes one zone in Vryo    |
 | Control with that many LEDs.                              |
 |                                                           |
-| ALL OF THESE ARE PLACEHOLDERS until the real card designs |
+| ALL OF THESE ARE PLACEHOLDERS (12 LEDs per zone) until    |
+| the real card designs                                     |
 | are decided. To change one, edit the numbers here. To     |
 | give a model its own layout, add a new layout below and   |
 | point that model at it.                                   |
@@ -39,7 +40,7 @@ static const VryoZoneDef YB_LAYOUT_DEFAULT[] =
 {
     { "Fan 1",          12 },
     { "Fan 2",          12 },
-    { "Shroud Strip",   20 },
+    { "Shroud Strip",   12 },
 };
 
 #define YB_ZONE_COUNT(layout)   ((unsigned int)(sizeof(layout) / sizeof((layout)[0])))

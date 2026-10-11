@@ -26,7 +26,7 @@ the packet format the PC side sends (`g++ -std=c++17 -I../vryo_gpu_controller te
   connect that ground to the board's ground.
 - A motherboard USB 2.0 header gives at most about 0.5 A in total. That is only enough
   for roughly 20 LEDs at moderate brightness. Each LED can draw up to 60 mA at full white
-  (44 LEDs is about 2.6 A at full white). `MAX_BRIGHTNESS` in the sketch caps this.
+  (the 36-LED placeholder layout is about 2.2 A at full white). `MAX_BRIGHTNESS` in the sketch caps this.
 - Data line: board pin (`LED_PIN`, default GP2) to the first LED's DIN through a 330 ohm
   resistor. A 3.3V board driving 5V LEDs often works, but a 74AHCT125 level shifter makes it reliable.
 - Put a 1000 uF capacitor across the LED 5V and ground near the first LED.

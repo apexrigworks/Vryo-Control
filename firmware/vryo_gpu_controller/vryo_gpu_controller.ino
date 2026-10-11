@@ -24,7 +24,7 @@
 
 // Total LEDs on the data line. Must equal the sum of the zone
 // LED counts for this card in VryoGPUConfig.h on the PC side.
-#define LED_COUNT           44
+#define LED_COUNT           36
 
 // 0 to 255. Caps total current. Keep this LOW while the board is
 // powered from a USB port (see firmware/README.md).
