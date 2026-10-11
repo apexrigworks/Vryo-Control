@@ -33,7 +33,7 @@ RGBController_VryoGPU::RGBController_VryoGPU(VryoGPUController* controller_ptr, 
     description         = std::string(YB_GPU_VENDOR) + " " + model.name + " Graphics Card";
     version             = YB_GPU_VERSION;
     type                = DEVICE_TYPE_GPU;
-    location            = controller->GetLocation();
+    location            = controller->GetLocation() + ": " + model.id;
     serial              = controller->GetSerial();
 
     /*-----------------------------------------------------*\
