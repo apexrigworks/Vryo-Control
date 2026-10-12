@@ -200,7 +200,7 @@ int startup(int argc, char* argv[], unsigned int ret_flags)
 
                 if(splash_seen_scan)
                 {
-                    target = std::max(target, 0.9 * ((double)percent / 100.0));
+                    target = (std::max)(target, 0.9 * ((double)percent / 100.0));
                 }
 
                 if(finished)
