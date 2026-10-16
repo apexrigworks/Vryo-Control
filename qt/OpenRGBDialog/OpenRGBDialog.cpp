@@ -334,6 +334,17 @@ OpenRGBDialog::OpenRGBDialog(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     SMBusToolsPage  = NULL;
     SoftInfoPage    = NULL;
 
+    /*-----------------------------------------------------*\
+    | Create the Dashboard page (first tab)                 |
+    \*-----------------------------------------------------*/
+    DashboardPage   = new VryoDashboardPage(ui->TabDashboard);
+    ui->DashboardLayout->addWidget(DashboardPage);
+
+    if(ui->MainTabBar->currentWidget() == ui->TabDashboard)
+    {
+        ui->MainButtonsFrame->setVisible(false);
+    }
+
     onDetectionProgressUpdated();
 
     ui->DetectionProgressBar->setRange(0, 100);
@@ -947,7 +958,7 @@ void OpenRGBDialog::AddClientTab()
     {
         ClientInfoPage = new OpenRGBClientInfoPage();
         ClientInfoPage->setObjectName(QString("SDK Client"));
-        ui->MainTabBar->insertTab(2, ClientInfoPage, tr("SDK Client"));
+        ui->MainTabBar->insertTab(3, ClientInfoPage, tr("SDK Client"));
     }
 }
 
@@ -960,7 +971,7 @@ void OpenRGBDialog::AddServerTab()
     {
         OpenRGBServerInfoPage *ServerInfoPage = new OpenRGBServerInfoPage();
         ServerInfoPage->setObjectName(QString("SDK Server"));
-        ui->MainTabBar->insertTab(2, ServerInfoPage, tr("SDK Server"));
+        ui->MainTabBar->insertTab(3, ServerInfoPage, tr("SDK Server"));
     }
 }
 
@@ -2369,6 +2380,22 @@ void OpenRGBDialog::on_DevicesTabBar_currentChanged(int tab_idx)
 void OpenRGBDialog::on_MainTabBar_currentChanged(int tab_idx)
 {
     TogglePluginsVisibility(tab_idx, ui->MainTabBar);
+
+    /*-----------------------------------------------------*\
+    | The profile and rescan buttons are lighting controls, |
+    | so keep them off the Dashboard. Plugin tabs manage    |
+    | this button row themselves.                           |
+    \*-----------------------------------------------------*/
+    QWidget* current_tab = ui->MainTabBar->widget(tab_idx);
+
+    if(current_tab == ui->TabDashboard)
+    {
+        ui->MainButtonsFrame->setVisible(false);
+    }
+    else if(dynamic_cast<OpenRGBPluginContainer*>(current_tab) == nullptr)
+    {
+        ui->MainButtonsFrame->setVisible(true);
+    }
 }
 
 void OpenRGBDialog::on_SettingsTabBar_currentChanged(int tab_idx)

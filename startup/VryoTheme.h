@@ -54,6 +54,8 @@ namespace VryoTheme
     static const char * VRYO_COLOR_ACCENT_LIGHT  = "#7C86FF";    // hover / highlights
     static const char * VRYO_COLOR_ACCENT_DARK   = "#2F38C9";    // pressed
     static const char * VRYO_COLOR_HERO          = "#01075D";    // deep indigo (site hero), splash top
+    static const char * VRYO_COLOR_WARN          = "#F5A623";    // dashboard: getting warm / busy
+    static const char * VRYO_COLOR_HOT           = "#F0524F";    // dashboard: hot / at the limit
 
     /*-----------------------------------------------------*\
     | Qt palette: this is what most of the window uses      |

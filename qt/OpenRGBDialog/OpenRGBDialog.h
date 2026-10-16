@@ -25,6 +25,7 @@
 #include "OpenRGBSupportedDevicesPage.h"
 #include "OpenRGBSettingsPage.h"
 #include "ManualDevicesSettingsPage/ManualDevicesSettingsPage.h"
+#include "VryoDashboardPage.h"
 
 #include "PluginManager.h"
 #include "SuspendResume.h"
@@ -82,6 +83,7 @@ private:
     /*-----------------------------------------------------*\
     | Page pointers                                         |
     \*-----------------------------------------------------*/
+    VryoDashboardPage *             DashboardPage       = nullptr;
     OpenRGBClientInfoPage *         ClientInfoPage;
     OpenRGBPluginsPage *            PluginsPage;
     OpenRGBSystemInfoPage *         SMBusToolsPage;
