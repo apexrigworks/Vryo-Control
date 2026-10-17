@@ -157,6 +157,13 @@ void VryoStatTile::SetUnavailable()
     update();
 }
 
+void VryoStatTile::SetAlert(double amount)
+{
+    alert_amount = Clamp01(amount);
+
+    update();
+}
+
 void VryoStatTile::AddHistory(double fraction)
 {
     if(fraction < 0.0)
@@ -294,6 +301,16 @@ void VryoStatTile::paintEvent(QPaintEvent *)
 
     const qreal hover = Clamp01(hover_amount);
     const qreal intro = Clamp01(intro_amount);
+    const qreal alert = Clamp01(alert_amount);
+
+    /*-----------------------------------------------------*\
+    | A hot card keeps a glow and a coloured border even    |
+    | without the mouse on it                               |
+    \*-----------------------------------------------------*/
+    const qreal glow_strength   = (hover > (alert * 0.8)) ? hover : (alert * 0.8);
+    const qreal border_strength = (hover * 0.85 > alert * 0.75) ? (hover * 0.85) : (alert * 0.75);
+    const QColor glow_base      = Mix(accent_colour, bar_colour, alert);
+    const QColor border_tint    = Mix(accent_light, bar_colour, alert);
 
     /*-----------------------------------------------------*\
     | Pop-in: fade, rise and a slight overshoot in size.    |
@@ -315,14 +332,14 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     /*-----------------------------------------------------*\
     | Soft glow that fades in under the mouse               |
     \*-----------------------------------------------------*/
-    if(hover > 0.01)
+    if(glow_strength > 0.01)
     {
         painter.setPen(Qt::NoPen);
 
         for(int ring = 5; ring >= 1; ring--)
         {
-            QColor glow = accent_colour;
-            glow.setAlpha((int)(30.0 * hover / (qreal)ring));
+            QColor glow = glow_base;
+            glow.setAlpha((int)(30.0 * glow_strength / (qreal)ring));
             painter.setBrush(glow);
             painter.drawRoundedRect(card.adjusted(-ring * 1.4, -ring * 1.4, ring * 1.4, ring * 1.4), VRYO_TILE_RADIUS + (ring * 1.4), VRYO_TILE_RADIUS + (ring * 1.4));
         }
@@ -336,7 +353,7 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     card_gradient.setColorAt(0.0, Mix(panel_colour, surface_colour, 0.45 + (0.35 * hover)));
     card_gradient.setColorAt(1.0, panel_colour);
 
-    painter.setPen(QPen(Mix(border_colour, accent_light, hover * 0.85), 1.0));
+    painter.setPen(QPen(Mix(border_colour, border_tint, border_strength), 1.0));
     painter.setBrush(card_gradient);
     painter.drawRoundedRect(card, VRYO_TILE_RADIUS, VRYO_TILE_RADIUS);
 
@@ -385,7 +402,7 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     const QString shown_value = available ? value_text : QStringLiteral("N/A");
 
     painter.setFont(value_font);
-    painter.setPen(available ? text_colour : muted_colour);
+    painter.setPen(available ? Mix(text_colour, bar_colour.lighter(115), alert * 0.9) : muted_colour);
 
     const QFontMetricsF value_metrics(value_font);
     const qreal         value_top   = card.top() + 34.0;

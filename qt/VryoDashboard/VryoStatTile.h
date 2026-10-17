@@ -41,6 +41,12 @@ public:
     void SetReading(const QString& value, const QString& unit, const QString& detail, double fraction, const QColor& colour);
     void SetUnavailable();
 
+    /*-----------------------------------------------------*\
+    | 0.0 = normal. Towards 1.0 the number, border and glow |
+    | take on the card's colour, so a hot card stands out.  |
+    \*-----------------------------------------------------*/
+    void SetAlert(double amount);
+
     void AddHistory(double fraction);
     void ClearHistory();
 
@@ -78,6 +84,7 @@ private:
     double                  press_amount    = 0.0;
     double                  ripple_amount   = 0.0;
     double                  intro_amount    = 1.0;
+    double                  alert_amount    = 0.0;
     bool                    ripple_active   = false;
     QPointF                 ripple_origin;
     int                     intro_token     = 0;

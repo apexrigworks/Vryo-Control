@@ -52,6 +52,52 @@ namespace
     }
 
     /*-----------------------------------------------------*\
+    | Blend two colours (amount 0.0 gives from, 1.0 to)     |
+    \*-----------------------------------------------------*/
+    QColor BlendColours(const QColor& from, const QColor& to, double amount)
+    {
+        const double t = Clamp01(amount);
+
+        return(QColor::fromRgbF(from.redF()   + ((to.redF()   - from.redF())   * t),
+                                from.greenF() + ((to.greenF() - from.greenF()) * t),
+                                from.blueF()  + ((to.blueF()  - from.blueF())  * t)));
+    }
+
+    /*-----------------------------------------------------*\
+    | Temperature colour, changing smoothly with the heat:  |
+    |   up to 45 C   Vryo blue                              |
+    |   65 C         amber                                  |
+    |   85 C and up  red                                    |
+    \*-----------------------------------------------------*/
+    const int       VRYO_TEMP_COOL_C    = 45;
+    const int       VRYO_TEMP_WARM_C    = 65;
+    const int       VRYO_TEMP_HOT_C     = 85;
+
+    QColor TemperatureColour(int celsius)
+    {
+        const QColor cool = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_ACCENT);
+        const QColor warm = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_WARN);
+        const QColor hot  = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_HOT);
+
+        if(celsius <= VRYO_TEMP_COOL_C)
+        {
+            return(cool);
+        }
+
+        if(celsius < VRYO_TEMP_WARM_C)
+        {
+            return(BlendColours(cool, warm, (double)(celsius - VRYO_TEMP_COOL_C) / (double)(VRYO_TEMP_WARM_C - VRYO_TEMP_COOL_C)));
+        }
+
+        if(celsius < VRYO_TEMP_HOT_C)
+        {
+            return(BlendColours(warm, hot, (double)(celsius - VRYO_TEMP_WARM_C) / (double)(VRYO_TEMP_HOT_C - VRYO_TEMP_WARM_C)));
+        }
+
+        return(hot);
+    }
+
+    /*-----------------------------------------------------*\
     | "NVIDIA GeForce GTX 1660 SUPER" -> "gtx 1660 super"   |
     \*-----------------------------------------------------*/
     QString CoreGpuName(QString name)
@@ -399,27 +445,23 @@ void VryoDashboardPage::ApplySample(const VryoGpuSample& sample)
     const QColor hot    = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_HOT);
 
     /*-----------------------------------------------------*\
-    | Temperature: 0 to 100 C on the bar                    |
+    | Temperature: 0 to 100 C on the bar. The colour slides |
+    | from blue through amber to red as it heats up, and    |
+    | from 60 C the number, border and glow follow it.      |
     \*-----------------------------------------------------*/
     if(sample.temperature_c >= 0)
     {
-        QColor  colour      = accent;
-        double  fraction    = Clamp01((double)sample.temperature_c / 100.0);
-
-        if(sample.temperature_c >= 85)
-        {
-            colour = hot;
-        }
-        else if(sample.temperature_c >= 70)
-        {
-            colour = warn;
-        }
+        const QColor    colour      = TemperatureColour(sample.temperature_c);
+        const double    fraction    = Clamp01((double)sample.temperature_c / 100.0);
+        const double    alert       = Clamp01((double)(sample.temperature_c - 60) / 25.0);
 
         tiles[TILE_TEMPERATURE]->SetReading(QString::number(sample.temperature_c), QString(QChar(0x00B0)) + QStringLiteral("C"), QString(), fraction, colour);
+        tiles[TILE_TEMPERATURE]->SetAlert(alert);
         tiles[TILE_TEMPERATURE]->AddHistory(fraction);
     }
     else
     {
+        tiles[TILE_TEMPERATURE]->SetAlert(0.0);
         tiles[TILE_TEMPERATURE]->SetUnavailable();
     }
 
@@ -518,6 +560,7 @@ void VryoDashboardPage::ApplySample(const VryoGpuSample& sample)
         }
 
         tiles[TILE_VIDEO_MEMORY]->SetReading(used_text, QStringLiteral("GB"), tr("of %1 GB").arg(total_text), fraction, colour);
+        tiles[TILE_VIDEO_MEMORY]->SetAlert((fraction >= 0.85) ? 1.0 : 0.0);
         tiles[TILE_VIDEO_MEMORY]->AddHistory(fraction);
     }
     else
@@ -550,6 +593,7 @@ void VryoDashboardPage::ApplySample(const VryoGpuSample& sample)
         }
 
         tiles[TILE_POWER]->SetReading(QString::number(sample.power_watts, 'f', 0), QStringLiteral("W"), detail, fraction, colour);
+        tiles[TILE_POWER]->SetAlert((fraction >= 0.90) ? 1.0 : 0.0);
         tiles[TILE_POWER]->AddHistory(fraction);
     }
     else
