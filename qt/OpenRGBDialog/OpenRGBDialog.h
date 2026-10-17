@@ -26,6 +26,7 @@
 #include "OpenRGBSettingsPage.h"
 #include "ManualDevicesSettingsPage/ManualDevicesSettingsPage.h"
 #include "VryoDashboardPage.h"
+#include "VryoUiFx.h"
 
 #include "PluginManager.h"
 #include "SuspendResume.h"

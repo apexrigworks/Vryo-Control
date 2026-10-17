@@ -9,14 +9,23 @@
 
 #include "VryoDashboardPage.h"
 
+#include <QEasingCurve>
 #include <QFont>
+#include <QGraphicsOpacityEffect>
 #include <QHBoxLayout>
 #include <QHideEvent>
+#include <QPointer>
+#include <QPropertyAnimation>
 #include <QResizeEvent>
 #include <QScrollArea>
 #include <QShowEvent>
+#include <QStringList>
+#include <QTimer>
 #include <QVBoxLayout>
 
+#include "ResourceManager.h"
+#include "SettingsManager.h"
+#include "../../Controllers/VryoGPUController/VryoGPUConfig.h"
 #include "../../startup/VryoTheme.h"
 
 namespace
@@ -40,6 +49,90 @@ namespace
         }
 
         return(value);
+    }
+
+    /*-----------------------------------------------------*\
+    | "NVIDIA GeForce GTX 1660 SUPER" -> "gtx 1660 super"   |
+    \*-----------------------------------------------------*/
+    QString CoreGpuName(QString name)
+    {
+        name = name.toLower();
+        name.remove(QStringLiteral("nvidia"));
+        name.remove(QStringLiteral("geforce"));
+
+        return(name.simplified());
+    }
+
+    /*-----------------------------------------------------*\
+    | "Glacier GTX 1660 Super 6GB" -> "gtx 1660 super"      |
+    | (drops the series word and the memory size)           |
+    \*-----------------------------------------------------*/
+    QString CoreModelName(const QString& model_name)
+    {
+        QStringList words = model_name.toLower().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+
+        if(!words.isEmpty())
+        {
+            words.removeFirst();
+        }
+
+        if(!words.isEmpty() && words.last().endsWith(QStringLiteral("gb")))
+        {
+            words.removeLast();
+        }
+
+        return(words.join(QLatin1Char(' ')));
+    }
+
+    /*-----------------------------------------------------*\
+    | The Vryo series name for this card, or an empty       |
+    | string if it is not a Vryo model. Order:              |
+    |   1. the model named under "VryoGPU" in OpenRGB.json  |
+    |      (only when there is a single GPU)                |
+    |   2. a Vryo model whose GPU matches the driver name   |
+    \*-----------------------------------------------------*/
+    QString ResolveSeriesName(const QString& gpu_name, bool single_gpu)
+    {
+        const size_t model_count = sizeof(YB_GPU_MODELS) / sizeof(YB_GPU_MODELS[0]);
+
+        if(single_gpu)
+        {
+            SettingsManager * settings = ResourceManager::get()->GetSettingsManager();
+
+            if(settings != nullptr)
+            {
+                nlohmann::json gpu_settings = settings->GetSettings(YB_GPU_SETTINGS_KEY);
+
+                if(gpu_settings.is_object() && gpu_settings.contains("model") && gpu_settings["model"].is_string())
+                {
+                    const QString wanted = QString::fromStdString(gpu_settings["model"].get<std::string>()).toLower();
+
+                    for(size_t i = 0; i < model_count; i++)
+                    {
+                        if((wanted == QString::fromLatin1(YB_GPU_MODELS[i].id).toLower())
+                         || (wanted == QString::fromLatin1(YB_GPU_MODELS[i].name).toLower()))
+                        {
+                            return(QString::fromLatin1(YB_GPU_MODELS[i].name));
+                        }
+                    }
+                }
+            }
+        }
+
+        const QString core = CoreGpuName(gpu_name);
+
+        if(!core.isEmpty())
+        {
+            for(size_t i = 0; i < model_count; i++)
+            {
+                if(CoreModelName(QString::fromLatin1(YB_GPU_MODELS[i].name)) == core)
+                {
+                    return(QString::fromLatin1(YB_GPU_MODELS[i].name));
+                }
+            }
+        }
+
+        return(QString());
     }
 }
 
@@ -67,31 +160,35 @@ void VryoDashboardPage::BuildUi()
 
     /*-----------------------------------------------------*\
     | Header: GPU name, driver version, GPU picker          |
+    | (kept in its own widget so it can fade in)            |
     \*-----------------------------------------------------*/
-    QHBoxLayout * header = new QHBoxLayout();
+    header_widget = new QWidget(this);
+
+    QHBoxLayout * header = new QHBoxLayout(header_widget);
+    header->setContentsMargins(0, 0, 0, 0);
 
     QVBoxLayout * title_box = new QVBoxLayout();
     title_box->setSpacing(0);
 
-    gpu_name_label = new QLabel(tr("GPU Dashboard"), this);
+    gpu_name_label = new QLabel(tr("GPU Dashboard"), header_widget);
     QFont name_font = gpu_name_label->font();
-    name_font.setPointSizeF(16.0);
+    name_font.setPointSizeF(18.0);
     name_font.setWeight(QFont::DemiBold);
     gpu_name_label->setFont(name_font);
 
-    driver_label = new QLabel(this);
+    driver_label = new QLabel(header_widget);
     driver_label->setStyleSheet(muted_style);
 
     title_box->addWidget(gpu_name_label);
     title_box->addWidget(driver_label);
 
-    gpu_picker = new QComboBox(this);
+    gpu_picker = new QComboBox(header_widget);
     gpu_picker->setVisible(false);
     connect(gpu_picker, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &VryoDashboardPage::OnGpuPicked);
 
     header->addLayout(title_box, 1);
     header->addWidget(gpu_picker, 0, Qt::AlignTop);
-    root->addLayout(header);
+    root->addWidget(header_widget);
 
     /*-----------------------------------------------------*\
     | Message shown when there is no NVIDIA driver or GPU   |
@@ -234,16 +331,27 @@ void VryoDashboardPage::ShowHeader()
 {
     if(nvml.IsReady())
     {
-        gpu_name_label->setText(nvml.GpuName(gpu_index));
+        const QString real_name     = nvml.GpuName(gpu_index);
+        const QString series_name   = ResolveSeriesName(real_name, nvml.GpuCount() == 1);
+        QStringList   details;
 
-        if(nvml.DriverVersion().isEmpty())
+        /*-------------------------------------------------*\
+        | A Vryo card shows its Vryo name as the title, with |
+        | the real GPU and driver underneath                 |
+        \*-------------------------------------------------*/
+        gpu_name_label->setText(series_name.isEmpty() ? real_name : series_name);
+
+        if(!series_name.isEmpty())
         {
-            driver_label->clear();
+            details << real_name;
         }
-        else
+
+        if(!nvml.DriverVersion().isEmpty())
         {
-            driver_label->setText(tr("NVIDIA driver %1").arg(nvml.DriverVersion()));
+            details << tr("NVIDIA driver %1").arg(nvml.DriverVersion());
         }
+
+        driver_label->setText(details.join(QStringLiteral("  |  ")));
 
         gpu_picker->setVisible(nvml.GpuCount() > 1);
     }
@@ -488,6 +596,57 @@ void VryoDashboardPage::showEvent(QShowEvent * event)
 
     Poll();
     timer->start();
+
+    PlayIntro();
+}
+
+/*---------------------------------------------------------*\
+| The header fades in, then the cards pop in one after the  |
+| other. The first time is the long version, later visits   |
+| to the tab are quicker.                                   |
+\*---------------------------------------------------------*/
+void VryoDashboardPage::PlayIntro()
+{
+    const bool  first       = !intro_played;
+    const int   start       = first ? 120 : 0;
+    const int   stagger     = first ? 85 : 40;
+    const int   duration    = first ? 650 : 400;
+
+    intro_played = true;
+
+    QGraphicsOpacityEffect * effect = new QGraphicsOpacityEffect(header_widget);
+    effect->setOpacity(0.0);
+    header_widget->setGraphicsEffect(effect);
+
+    QPropertyAnimation * fade = new QPropertyAnimation(effect, "opacity", effect);
+    fade->setDuration(first ? 700 : 350);
+    fade->setStartValue(0.0);
+    fade->setEndValue(1.0);
+    fade->setEasingCurve(QEasingCurve(QEasingCurve::OutCubic));
+
+    /*-----------------------------------------------------*\
+    | Remove the effect once it is done (deferred, so the   |
+    | animation is not deleted while it is still emitting)  |
+    \*-----------------------------------------------------*/
+    QPointer<QGraphicsOpacityEffect> effect_guard(effect);
+
+    connect(fade, &QPropertyAnimation::finished, header_widget, [this, effect_guard]()
+    {
+        QTimer::singleShot(0, header_widget, [this, effect_guard]()
+        {
+            if(!effect_guard.isNull() && (header_widget->graphicsEffect() == effect_guard.data()))
+            {
+                header_widget->setGraphicsEffect(nullptr);
+            }
+        });
+    });
+
+    fade->start();
+
+    for(size_t i = 0; i < tiles.size(); i++)
+    {
+        tiles[i]->PlayIntro(start + ((int)i * stagger), duration);
+    }
 }
 
 void VryoDashboardPage::hideEvent(QHideEvent * event)

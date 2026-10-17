@@ -19,7 +19,8 @@ cd /d "%~dp0.."
     cmd /c "scripts\build-windows.bat 6.8.3 2022 64 2>&1" | powershell -NoProfile -Command "$input | ForEach-Object { $_; Add-Content -Path build-log.txt -Value $_ -Encoding ascii }"
     if exist "OpenRGB Windows 64-bit\VryoControl.exe" (
         echo.
-        echo ===== BUILD OK. Open Vryo Control from the Start menu. =====
+        powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\create-start-menu-shortcut.ps1"
+        echo ===== BUILD OK. Press the Windows key, type vryo and click Vryo Control. =====
         exit /b 0
     )
     echo.

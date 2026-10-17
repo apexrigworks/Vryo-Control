@@ -106,40 +106,118 @@ namespace VryoTheme
     \*-----------------------------------------------------*/
     inline QString MakeStyleSheet()
     {
-        QString css = QStringLiteral(
+        /*-------------------------------------------------*\
+        | Built in several pieces: one very long string      |
+        | literal can hit a compiler limit.                  |
+        \*-------------------------------------------------*/
+        QString css;
+
+        /*-------------------------------------------------*\
+        | Basics: tooltips, buttons, inputs, menus           |
+        \*-------------------------------------------------*/
+        css += QStringLiteral(
             "QToolTip { color: %TEXT%; background-color: %SURFACE%; border: 1px solid %ACCENT%; padding: 4px; }"
 
-            "QPushButton { background-color: %SURFACE%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 10px; padding: 5px 14px; }"
-            "QPushButton:hover { border-color: %ACCENT%; background-color: %PANEL%; }"
+            "QPushButton { background-color: %SURFACE%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 10px; padding: 6px 16px; }"
+            "QPushButton:hover { border-color: %ACCENT_LIGHT%; background-color: %PANEL%; }"
             "QPushButton:pressed { background-color: %ACCENT_DARK%; border-color: %ACCENT_DARK%; color: #FFFFFF; }"
             "QPushButton:disabled { color: %MUTED%; border-color: %BORDER%; background-color: %PANEL%; }"
 
-            "QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit, QTextEdit { background-color: %PANEL%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 5px; padding: 3px 6px; selection-background-color: %ACCENT%; }"
-            "QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus { border-color: %ACCENT%; }"
+            "QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit, QTextEdit { background-color: %PANEL%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 8px; padding: 4px 8px; selection-background-color: %ACCENT%; }"
+            "QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover { border-color: %ACCENT_DARK%; }"
+            "QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus { border-color: %ACCENT_LIGHT%; }"
 
-            "QComboBox { background-color: %SURFACE%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 5px; padding: 3px 8px; }"
-            "QComboBox:hover { border-color: %ACCENT%; }"
-            "QComboBox QAbstractItemView { background-color: %PANEL%; color: %TEXT%; border: 1px solid %BORDER%; selection-background-color: %ACCENT%; selection-color: #FFFFFF; }"
+            "QComboBox { background-color: %SURFACE%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 8px; padding: 5px 10px; }"
+            "QComboBox:hover { border-color: %ACCENT_LIGHT%; }"
+            "QComboBox QAbstractItemView { background-color: %PANEL%; color: %TEXT%; border: 1px solid %BORDER%; selection-background-color: %ACCENT%; selection-color: #FFFFFF; outline: none; }"
 
-            "QMenu { background-color: %PANEL%; color: %TEXT%; border: 1px solid %BORDER%; }"
+            "QMenu { background-color: %PANEL%; color: %TEXT%; border: 1px solid %BORDER%; padding: 4px; }"
+            "QMenu::item { padding: 6px 22px; border-radius: 6px; }"
             "QMenu::item:selected { background-color: %ACCENT%; color: #FFFFFF; }"
+        );
 
-            "QScrollBar:vertical { background: %BACKGROUND%; width: 10px; margin: 0; }"
+        /*-------------------------------------------------*\
+        | Scroll bars and progress                           |
+        \*-------------------------------------------------*/
+        css += QStringLiteral(
+            "QScrollBar:vertical { background: transparent; width: 10px; margin: 0; }"
             "QScrollBar::handle:vertical { background: %BORDER%; border-radius: 5px; min-height: 24px; }"
             "QScrollBar::handle:vertical:hover { background: %ACCENT%; }"
             "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
-            "QScrollBar:horizontal { background: %BACKGROUND%; height: 10px; margin: 0; }"
+            "QScrollBar:horizontal { background: transparent; height: 10px; margin: 0; }"
             "QScrollBar::handle:horizontal { background: %BORDER%; border-radius: 5px; min-width: 24px; }"
             "QScrollBar::handle:horizontal:hover { background: %ACCENT%; }"
             "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }"
 
-            "QSlider::groove:horizontal { height: 4px; background: %BORDER%; border-radius: 2px; }"
-            "QSlider::sub-page:horizontal { background: %ACCENT%; border-radius: 2px; }"
-            "QSlider::handle:horizontal { background: %ACCENT_LIGHT%; width: 14px; height: 14px; margin: -5px 0; border-radius: 7px; }"
-            "QSlider::handle:horizontal:hover { background: #FFFFFF; }"
+            "QProgressBar { background-color: %PANEL%; border: 1px solid %BORDER%; border-radius: 6px; text-align: center; color: %TEXT%; }"
+            "QProgressBar::chunk { background-color: %ACCENT%; border-radius: 5px; }"
+        );
 
-            "QProgressBar { background-color: %PANEL%; border: 1px solid %BORDER%; border-radius: 5px; text-align: center; color: %TEXT%; }"
-            "QProgressBar::chunk { background-color: %ACCENT%; border-radius: 4px; }"
+        /*-------------------------------------------------*\
+        | Sliders: blue gradient fill, round glowing handle  |
+        \*-------------------------------------------------*/
+        css += QStringLiteral(
+            "QSlider::groove:horizontal { height: 6px; background: %BORDER%; border-radius: 3px; }"
+            "QSlider::sub-page:horizontal { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %ACCENT_DARK%, stop:1 %ACCENT_LIGHT%); border-radius: 3px; }"
+            "QSlider::handle:horizontal { background: %TEXT%; border: 3px solid %ACCENT%; width: 12px; height: 12px; margin: -6px 0px; border-radius: 9px; }"
+            "QSlider::handle:horizontal:hover { border-color: %ACCENT_LIGHT%; }"
+            "QSlider::handle:horizontal:pressed { background: %ACCENT_LIGHT%; border-color: #FFFFFF; }"
+        );
+
+        /*-------------------------------------------------*\
+        | Radio buttons and check boxes                      |
+        \*-------------------------------------------------*/
+        css += QStringLiteral(
+            "QRadioButton, QCheckBox { spacing: 8px; }"
+            "QRadioButton::indicator { width: 14px; height: 14px; border-radius: 9px; border: 2px solid %BORDER%; background: %PANEL%; }"
+            "QRadioButton::indicator:hover { border-color: %ACCENT_LIGHT%; }"
+            "QRadioButton::indicator:checked { border-color: %ACCENT%; background: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 %ACCENT_LIGHT%, stop:0.45 %ACCENT_LIGHT%, stop:0.55 %PANEL%, stop:1 %PANEL%); }"
+            "QCheckBox::indicator { width: 14px; height: 14px; border-radius: 6px; border: 2px solid %BORDER%; background: %PANEL%; }"
+            "QCheckBox::indicator:hover { border-color: %ACCENT_LIGHT%; }"
+            "QCheckBox::indicator:checked { border-color: %ACCENT%; background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT_LIGHT%, stop:1 %ACCENT%); }"
+        );
+
+        /*-------------------------------------------------*\
+        | Tabs. Main tabs are pills with a blue gradient on  |
+        | the selected one; device tabs are small cards; the |
+        | vertical Information and Settings tabs get a blue  |
+        | marker on the left.                                |
+        \*-------------------------------------------------*/
+        css += QStringLiteral(
+            "QTabWidget::pane { border: none; background: transparent; }"
+            "QTabBar { qproperty-drawBase: 0; }"
+
+            "QTabWidget#MainTabBar > QTabBar::tab { background: transparent; color: %MUTED%; padding: 9px 22px; margin: 0px 6px 8px 0px; border: 1px solid transparent; border-radius: 11px; font-weight: 600; }"
+            "QTabWidget#MainTabBar > QTabBar::tab:hover { background: %SURFACE%; color: %TEXT%; }"
+            "QTabWidget#MainTabBar > QTabBar::tab:selected { color: #FFFFFF; border: 1px solid %ACCENT_LIGHT%; background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT%, stop:1 %ACCENT_DARK%); }"
+
+            "QTabWidget#DevicesTabBar > QTabBar::tab { background: %PANEL%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 11px; padding: 6px 12px; margin: 0px 6px 8px 0px; }"
+            "QTabWidget#DevicesTabBar > QTabBar::tab:hover { border-color: %ACCENT_LIGHT%; }"
+            "QTabWidget#DevicesTabBar > QTabBar::tab:selected { border: 1px solid %ACCENT%; background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 %SURFACE%, stop:1 %PANEL%); }"
+
+            "QTabWidget#InformationTabBar > QTabBar::tab, QTabWidget#SettingsTabBar > QTabBar::tab { background: transparent; border: none; border-left: 3px solid transparent; border-radius: 8px; padding: 8px 8px; margin: 2px 8px 2px 0px; }"
+            "QTabWidget#InformationTabBar > QTabBar::tab:hover, QTabWidget#SettingsTabBar > QTabBar::tab:hover { background: %PANEL%; }"
+            "QTabWidget#InformationTabBar > QTabBar::tab:selected, QTabWidget#SettingsTabBar > QTabBar::tab:selected { background: %SURFACE%; border-left: 3px solid %ACCENT%; }"
+        );
+
+        /*-------------------------------------------------*\
+        | RGB page: colour picker and controls become cards, |
+        | the main actions are filled blue                   |
+        \*-------------------------------------------------*/
+        css += QStringLiteral(
+            "QFrame#ColorFrame, QFrame#ControlsFrame { background-color: %PANEL%; border: 1px solid %BORDER%; border-radius: 14px; }"
+            "QFrame#ColorEntryFrame { background: transparent; border: none; }"
+
+            "QScrollArea#DeviceViewBoxFrame { background-color: %PANEL%; border: 1px solid %BORDER%; border-radius: 14px; }"
+            "QScrollArea#DeviceViewBoxFrame QWidget#DeviceViewBoxFrameContents { background: transparent; }"
+
+            "QPushButton#ApplyColorsButton, QPushButton#DeviceSaveButton, QPushButton#SetAllButton { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT%, stop:1 %ACCENT_DARK%); border: 1px solid %ACCENT_LIGHT%; color: #FFFFFF; font-weight: 600; padding: 8px 18px; }"
+            "QPushButton#ApplyColorsButton:hover, QPushButton#DeviceSaveButton:hover, QPushButton#SetAllButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT_LIGHT%, stop:1 %ACCENT%); border-color: #FFFFFF; }"
+            "QPushButton#ApplyColorsButton:pressed, QPushButton#DeviceSaveButton:pressed, QPushButton#SetAllButton:pressed { background: %ACCENT_DARK%; border-color: %ACCENT_DARK%; }"
+
+            "QFrame#MainButtonsFrame QToolButton { background-color: %SURFACE%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 10px; padding: 6px 12px; }"
+            "QFrame#MainButtonsFrame QToolButton:hover { border-color: %ACCENT_LIGHT%; background-color: %PANEL%; }"
+            "QFrame#MainButtonsFrame QToolButton:pressed { background-color: %ACCENT_DARK%; border-color: %ACCENT_DARK%; }"
         );
 
         css.replace(QStringLiteral("%BACKGROUND%"), QString::fromLatin1(VRYO_COLOR_BACKGROUND));

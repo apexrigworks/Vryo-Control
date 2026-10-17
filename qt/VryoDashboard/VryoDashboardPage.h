@@ -56,7 +56,9 @@ private:
     int                             gpu_index       = 0;
     int                             columns         = 0;
     bool                            driver_tried    = false;
+    bool                            intro_played    = false;
 
+    QWidget *                       header_widget   = nullptr;
     QLabel *                        gpu_name_label  = nullptr;
     QLabel *                        driver_label    = nullptr;
     QComboBox *                     gpu_picker      = nullptr;
@@ -73,4 +75,5 @@ private:
     void Reflow();
     void SetTilesUnavailable();
     void ApplySample(const VryoGpuSample& sample);
+    void PlayIntro();
 };

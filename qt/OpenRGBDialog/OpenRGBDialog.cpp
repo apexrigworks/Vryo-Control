@@ -340,6 +340,11 @@ OpenRGBDialog::OpenRGBDialog(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     DashboardPage   = new VryoDashboardPage(ui->TabDashboard);
     ui->DashboardLayout->addWidget(DashboardPage);
 
+    /*-----------------------------------------------------*\
+    | Click ripple on every button in the app               |
+    \*-----------------------------------------------------*/
+    VryoUiFx::Install();
+
     if(ui->MainTabBar->currentWidget() == ui->TabDashboard)
     {
         ui->MainButtonsFrame->setVisible(false);

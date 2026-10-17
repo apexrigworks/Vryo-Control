@@ -8,21 +8,68 @@
 
 #include "VryoStatTile.h"
 
+#include <cmath>
+
+#include <QEvent>
 #include <QFont>
 #include <QFontMetricsF>
 #include <QLinearGradient>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPaintEvent>
 #include <QPen>
 #include <QRectF>
+#include <QTimer>
+#include <QVariantAnimation>
 
 #include "../../startup/VryoTheme.h"
 
 namespace
 {
     const size_t    VRYO_TILE_HISTORY_LENGTH    = 90;
-    const qreal     VRYO_TILE_MARGIN            = 14.0;
+    const qreal     VRYO_TILE_MARGIN            = 16.0;
+    const qreal     VRYO_TILE_RADIUS            = 14.0;
+
+    /*-----------------------------------------------------*\
+    | Room left around the card so the glow, the lift and   |
+    | the pop-in overshoot are not cut off by the widget    |
+    \*-----------------------------------------------------*/
+    const qreal     VRYO_TILE_PAD_SIDE          = 6.0;
+    const qreal     VRYO_TILE_PAD_TOP           = 9.0;
+    const qreal     VRYO_TILE_PAD_BOTTOM        = 6.0;
+
+    QColor Mix(const QColor& from, const QColor& to, qreal amount)
+    {
+        if(amount < 0.0)
+        {
+            amount = 0.0;
+        }
+
+        if(amount > 1.0)
+        {
+            amount = 1.0;
+        }
+
+        return(QColor::fromRgbF(from.redF()   + ((to.redF()   - from.redF())   * amount),
+                                from.greenF() + ((to.greenF() - from.greenF()) * amount),
+                                from.blueF()  + ((to.blueF()  - from.blueF())  * amount)));
+    }
+
+    qreal Clamp01(qreal value)
+    {
+        if(value < 0.0)
+        {
+            return(0.0);
+        }
+
+        if(value > 1.0)
+        {
+            return(1.0);
+        }
+
+        return(value);
+    }
 }
 
 VryoStatTile::VryoStatTile(const QString& title, QWidget * parent) :
@@ -30,7 +77,42 @@ VryoStatTile::VryoStatTile(const QString& title, QWidget * parent) :
     title_text(title)
 {
     bar_colour = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_ACCENT);
-    setMinimumSize(190, 128);
+    setMinimumSize(190, 168);
+
+    hover_anim  = MakeAnimation(&hover_amount);
+    press_anim  = MakeAnimation(&press_amount);
+    ripple_anim = MakeAnimation(&ripple_amount);
+    intro_anim  = MakeAnimation(&intro_amount);
+    bar_anim    = MakeAnimation(&shown_fraction);
+
+    connect(ripple_anim, &QVariantAnimation::finished, this, [this]()
+    {
+        ripple_active = false;
+        update();
+    });
+}
+
+QVariantAnimation * VryoStatTile::MakeAnimation(double * target)
+{
+    QVariantAnimation * animation = new QVariantAnimation(this);
+
+    connect(animation, &QVariantAnimation::valueChanged, this, [this, target](const QVariant& value)
+    {
+        *target = value.toDouble();
+        update();
+    });
+
+    return(animation);
+}
+
+void VryoStatTile::Animate(QVariantAnimation * animation, double from, double to, int milliseconds, QEasingCurve::Type curve)
+{
+    animation->stop();
+    animation->setStartValue(from);
+    animation->setEndValue(to);
+    animation->setDuration(milliseconds);
+    animation->setEasingCurve(QEasingCurve(curve));
+    animation->start();
 }
 
 void VryoStatTile::SetReading(const QString& value, const QString& unit, const QString& detail, double fraction, const QColor& colour)
@@ -42,6 +124,23 @@ void VryoStatTile::SetReading(const QString& value, const QString& unit, const Q
     bar_colour      = colour;
     available       = true;
 
+    /*-----------------------------------------------------*\
+    | The bar glides to the new value instead of jumping    |
+    \*-----------------------------------------------------*/
+    if(fraction < 0.0)
+    {
+        bar_anim->stop();
+        shown_fraction = -1.0;
+    }
+    else if(shown_fraction < 0.0)
+    {
+        shown_fraction = fraction;
+    }
+    else if(std::fabs(shown_fraction - fraction) > 0.0005)
+    {
+        Animate(bar_anim, shown_fraction, fraction, 650, QEasingCurve::OutCubic);
+    }
+
     update();
 }
 
@@ -51,8 +150,10 @@ void VryoStatTile::SetUnavailable()
     unit_text.clear();
     detail_text.clear();
     bar_fraction    = -1.0;
+    shown_fraction  = -1.0;
     available       = false;
 
+    bar_anim->stop();
     update();
 }
 
@@ -82,18 +183,103 @@ void VryoStatTile::ClearHistory()
     update();
 }
 
+void VryoStatTile::PlayIntro(int delay_ms, int duration_ms)
+{
+    intro_token++;
+
+    const int token = intro_token;
+
+    intro_anim->stop();
+    intro_amount = 0.0;
+    update();
+
+    QTimer::singleShot(delay_ms, this, [this, token, duration_ms]()
+    {
+        if(token != intro_token)
+        {
+            return;
+        }
+
+        Animate(intro_anim, 0.0, 1.0, duration_ms, QEasingCurve::Linear);
+    });
+}
+
 QSize VryoStatTile::sizeHint() const
 {
-    return(QSize(230, 140));
+    return(QSize(236, 184));
 }
 
 QSize VryoStatTile::minimumSizeHint() const
 {
-    return(QSize(190, 128));
+    return(QSize(190, 168));
+}
+
+bool VryoStatTile::event(QEvent * event)
+{
+    if(event->type() == QEvent::Enter)
+    {
+        Animate(hover_anim, hover_amount, 1.0, 200, QEasingCurve::OutCubic);
+    }
+    else if(event->type() == QEvent::Leave)
+    {
+        Animate(hover_anim, hover_amount, 0.0, 320, QEasingCurve::OutCubic);
+    }
+
+    return(QWidget::event(event));
+}
+
+void VryoStatTile::mousePressEvent(QMouseEvent * event)
+{
+    if(event->button() == Qt::LeftButton)
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        ripple_origin   = event->position();
+#else
+        ripple_origin   = event->localPos();
+#endif
+        ripple_active   = true;
+
+        Animate(press_anim, press_amount, 1.0, 90, QEasingCurve::OutQuad);
+        Animate(ripple_anim, 0.0, 1.0, 700, QEasingCurve::OutCubic);
+
+        /*-------------------------------------------------*\
+        | Accept the press, otherwise Qt never sends us the |
+        | matching release and the card would stay shrunk   |
+        \*-------------------------------------------------*/
+        event->accept();
+        return;
+    }
+
+    QWidget::mousePressEvent(event);
+}
+
+void VryoStatTile::mouseReleaseEvent(QMouseEvent * event)
+{
+    if(event->button() == Qt::LeftButton)
+    {
+        /*-------------------------------------------------*\
+        | OutBack overshoots a little, so the card springs  |
+        | back past its normal size and settles             |
+        \*-------------------------------------------------*/
+        Animate(press_anim, press_amount, 0.0, 450, QEasingCurve::OutBack);
+
+        event->accept();
+        return;
+    }
+
+    QWidget::mouseReleaseEvent(event);
 }
 
 void VryoStatTile::paintEvent(QPaintEvent *)
 {
+    /*-----------------------------------------------------*\
+    | Before its pop-in starts the card is not drawn at all |
+    \*-----------------------------------------------------*/
+    if(intro_amount <= 0.0)
+    {
+        return;
+    }
+
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::TextAntialiasing, true);
@@ -103,21 +289,59 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     const QColor surface_colour = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_SURFACE);
     const QColor text_colour    = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_TEXT);
     const QColor muted_colour   = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_MUTED);
+    const QColor accent_colour  = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_ACCENT);
+    const QColor accent_light   = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_ACCENT_LIGHT);
 
-    const qreal  tile_width     = (qreal)width();
-    const qreal  tile_height    = (qreal)height();
+    const qreal hover = Clamp01(hover_amount);
+    const qreal intro = Clamp01(intro_amount);
 
     /*-----------------------------------------------------*\
-    | Card background                                       |
+    | Pop-in: fade, rise and a slight overshoot in size.    |
+    | Press: the card shrinks a little and springs back.    |
     \*-----------------------------------------------------*/
-    const QRectF card(0.5, 0.5, tile_width - 1.0, tile_height - 1.0);
+    const qreal rise    = QEasingCurve(QEasingCurve::OutCubic).valueForProgress(intro);
+    const qreal grow    = QEasingCurve(QEasingCurve::OutBack).valueForProgress(intro);
+    const qreal scale   = (0.90 + (0.10 * grow)) * (1.0 - (0.03 * press_amount));
+    const qreal lift    = (-3.0 * hover) + ((1.0 - rise) * 20.0);
 
-    painter.setPen(QPen(border_colour, 1.0));
-    painter.setBrush(panel_colour);
-    painter.drawRoundedRect(card, 12.0, 12.0);
+    painter.setOpacity(Clamp01(intro * 2.2));
 
-    const qreal left    = VRYO_TILE_MARGIN;
-    const qreal right   = tile_width - VRYO_TILE_MARGIN;
+    const QRectF card = QRectF(rect()).adjusted(VRYO_TILE_PAD_SIDE, VRYO_TILE_PAD_TOP, -VRYO_TILE_PAD_SIDE, -VRYO_TILE_PAD_BOTTOM);
+
+    painter.translate(card.center().x(), card.center().y() + lift);
+    painter.scale(scale, scale);
+    painter.translate(-card.center().x(), -card.center().y());
+
+    /*-----------------------------------------------------*\
+    | Soft glow that fades in under the mouse               |
+    \*-----------------------------------------------------*/
+    if(hover > 0.01)
+    {
+        painter.setPen(Qt::NoPen);
+
+        for(int ring = 5; ring >= 1; ring--)
+        {
+            QColor glow = accent_colour;
+            glow.setAlpha((int)(30.0 * hover / (qreal)ring));
+            painter.setBrush(glow);
+            painter.drawRoundedRect(card.adjusted(-ring * 1.4, -ring * 1.4, ring * 1.4, ring * 1.4), VRYO_TILE_RADIUS + (ring * 1.4), VRYO_TILE_RADIUS + (ring * 1.4));
+        }
+    }
+
+    /*-----------------------------------------------------*\
+    | Card: a faint top-to-bottom gradient and a border     |
+    | that turns blue on hover                              |
+    \*-----------------------------------------------------*/
+    QLinearGradient card_gradient(card.topLeft(), card.bottomLeft());
+    card_gradient.setColorAt(0.0, Mix(panel_colour, surface_colour, 0.45 + (0.35 * hover)));
+    card_gradient.setColorAt(1.0, panel_colour);
+
+    painter.setPen(QPen(Mix(border_colour, accent_light, hover * 0.85), 1.0));
+    painter.setBrush(card_gradient);
+    painter.drawRoundedRect(card, VRYO_TILE_RADIUS, VRYO_TILE_RADIUS);
+
+    const qreal left    = card.left() + VRYO_TILE_MARGIN;
+    const qreal right   = card.right() - VRYO_TILE_MARGIN;
     const qreal inner   = right - left;
 
     /*-----------------------------------------------------*\
@@ -127,30 +351,31 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     small_font.setPointSizeF(8.5);
     small_font.setLetterSpacing(QFont::AbsoluteSpacing, 0.8);
     painter.setFont(small_font);
-    painter.setPen(muted_colour);
-    painter.drawText(QRectF(left, 10.0, inner, 18.0), Qt::AlignLeft | Qt::AlignVCenter, title_text.toUpper());
+    painter.setPen(Mix(muted_colour, text_colour, hover * 0.5));
+    painter.drawText(QRectF(left, card.top() + 12.0, inner, 18.0), Qt::AlignLeft | Qt::AlignVCenter, title_text.toUpper());
 
     if(available && !detail_text.isEmpty())
     {
         QFont detail_font = font();
         detail_font.setPointSizeF(8.5);
         painter.setFont(detail_font);
-        painter.drawText(QRectF(left, 10.0, inner, 18.0), Qt::AlignRight | Qt::AlignVCenter, detail_text);
+        painter.setPen(muted_colour);
+        painter.drawText(QRectF(left, card.top() + 12.0, inner, 18.0), Qt::AlignRight | Qt::AlignVCenter, detail_text);
     }
 
     /*-----------------------------------------------------*\
     | Big value with a small unit after it                  |
     \*-----------------------------------------------------*/
-    qreal value_pixels = tile_height * 0.24;
+    qreal value_pixels = card.height() * 0.24;
 
-    if(value_pixels < 22.0)
+    if(value_pixels < 24.0)
     {
-        value_pixels = 22.0;
+        value_pixels = 24.0;
     }
 
-    if(value_pixels > 40.0)
+    if(value_pixels > 42.0)
     {
-        value_pixels = 40.0;
+        value_pixels = 42.0;
     }
 
     QFont value_font = font();
@@ -163,7 +388,7 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     painter.setPen(available ? text_colour : muted_colour);
 
     const QFontMetricsF value_metrics(value_font);
-    const qreal         value_top   = 30.0;
+    const qreal         value_top   = card.top() + 34.0;
     const qreal         value_wide  = value_metrics.horizontalAdvance(shown_value);
 
     painter.drawText(QRectF(left, value_top, inner, value_metrics.height()), Qt::AlignLeft | Qt::AlignVCenter, shown_value);
@@ -183,20 +408,15 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     | Bar along the bottom                                  |
     \*-----------------------------------------------------*/
     const qreal bar_height  = 6.0;
-    const QRectF bar_track(left, tile_height - VRYO_TILE_MARGIN - bar_height, inner, bar_height);
+    const QRectF bar_track(left, card.bottom() - VRYO_TILE_MARGIN - bar_height + 2.0, inner, bar_height);
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(surface_colour);
     painter.drawRoundedRect(bar_track, bar_height / 2.0, bar_height / 2.0);
 
-    if(available && (bar_fraction >= 0.0))
+    if(available && (shown_fraction >= 0.0))
     {
-        double clamped = bar_fraction;
-
-        if(clamped > 1.0)
-        {
-            clamped = 1.0;
-        }
+        const double clamped = Clamp01(shown_fraction);
 
         QRectF bar_fill = bar_track;
         bar_fill.setWidth(bar_height + ((bar_track.width() - bar_height) * clamped));
@@ -212,16 +432,17 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     /*-----------------------------------------------------*\
     | History graph between the value and the bar           |
     \*-----------------------------------------------------*/
-    const qreal graph_top       = value_top + value_metrics.height() + 4.0;
-    const qreal graph_bottom    = bar_track.top() - 8.0;
+    const qreal graph_top       = value_top + value_metrics.height() + 6.0;
+    const qreal graph_bottom    = bar_track.top() - 12.0;
 
-    if(available && (history.size() >= 2) && (graph_bottom - graph_top >= 12.0))
+    if(available && (history.size() >= 2) && (graph_bottom - graph_top >= 14.0))
     {
         const QRectF graph(left, graph_top, inner, graph_bottom - graph_top);
         const qreal  step = graph.width() / (qreal)(VRYO_TILE_HISTORY_LENGTH - 1);
 
         QPainterPath line;
         QPainterPath area;
+        QPointF      last_point;
 
         const qreal first_x = graph.right() - (step * (qreal)(history.size() - 1));
 
@@ -229,6 +450,8 @@ void VryoStatTile::paintEvent(QPaintEvent *)
         {
             const qreal x = first_x + (step * (qreal)i);
             const qreal y = graph.bottom() - (graph.height() * history[i]);
+
+            last_point = QPointF(x, y);
 
             if(i == 0)
             {
@@ -248,7 +471,7 @@ void VryoStatTile::paintEvent(QPaintEvent *)
 
         QColor fill_top     = bar_colour;
         QColor fill_bottom  = bar_colour;
-        fill_top.setAlpha(70);
+        fill_top.setAlpha(80);
         fill_bottom.setAlpha(0);
 
         QLinearGradient area_gradient(0, graph.top(), 0, graph.bottom());
@@ -260,7 +483,41 @@ void VryoStatTile::paintEvent(QPaintEvent *)
         painter.drawPath(area);
 
         painter.setBrush(Qt::NoBrush);
-        painter.setPen(QPen(bar_colour, 1.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        painter.setPen(QPen(bar_colour, 1.8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         painter.drawPath(line);
+
+        /*-------------------------------------------------*\
+        | A glowing dot on the newest reading               |
+        \*-------------------------------------------------*/
+        QColor halo = bar_colour;
+        halo.setAlpha(70);
+
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(halo);
+        painter.drawEllipse(last_point, 5.5, 5.5);
+        painter.setBrush(bar_colour.lighter(130));
+        painter.drawEllipse(last_point, 2.6, 2.6);
+    }
+
+    /*-----------------------------------------------------*\
+    | Click ripple, spreading from where the card was       |
+    | pressed and kept inside the rounded corners           |
+    \*-----------------------------------------------------*/
+    if(ripple_active)
+    {
+        QPainterPath clip;
+        clip.addRoundedRect(card, VRYO_TILE_RADIUS, VRYO_TILE_RADIUS);
+
+        const qreal reach = std::sqrt((card.width() * card.width()) + (card.height() * card.height()));
+
+        QColor ripple = accent_light;
+        ripple.setAlphaF(0.32 * (1.0 - Clamp01(ripple_amount)));
+
+        painter.save();
+        painter.setClipPath(clip);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(ripple);
+        painter.drawEllipse(ripple_origin, reach * ripple_amount, reach * ripple_amount);
+        painter.restore();
     }
 }
