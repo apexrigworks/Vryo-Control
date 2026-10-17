@@ -7,6 +7,8 @@
 |   SPDX-License-Identifier: GPL-2.0-or-later               |
 \*---------------------------------------------------------*/
 
+#include <cmath>
+#include <QApplication>
 #include <thread>
 #include "AutoStart.h"
 #include "OpenRGBDialog.h"
@@ -701,6 +703,54 @@ void OpenRGBDialog::UpdateTabs()
 
 void OpenRGBDialog::resizeEvent(QResizeEvent *event)
 {
+    /*-----------------------------------------------------*\
+    | Larger text on a large window. The scale goes from    |
+    | 1.0 (the normal window size) up to 1.4, in steps of   |
+    | 0.1, so dragging the window edge only changes the     |
+    | application font a few times.                         |
+    \*-----------------------------------------------------*/
+    static double base_point_size   = 0.0;
+    static double applied_scale     = 1.0;
+
+    if(base_point_size <= 0.0)
+    {
+        base_point_size = QApplication::font().pointSizeF();
+
+        if(base_point_size <= 0.0)
+        {
+            base_point_size = 9.0;
+        }
+    }
+
+    double wanted       = (double)width() / 1000.0;
+    const double tall   = (double)height() / 620.0;
+
+    if(tall < wanted)
+    {
+        wanted = tall;
+    }
+
+    if(wanted < 1.0)
+    {
+        wanted = 1.0;
+    }
+
+    if(wanted > 1.4)
+    {
+        wanted = 1.4;
+    }
+
+    wanted = std::floor((wanted * 10.0) + 0.5) / 10.0;
+
+    if(wanted != applied_scale)
+    {
+        applied_scale = wanted;
+
+        QFont app_font = QApplication::font();
+        app_font.setPointSizeF(base_point_size * wanted);
+        QApplication::setFont(app_font);
+    }
+
     UpdateTabs();
 
     QWidget::resizeEvent(event);

@@ -35,6 +35,7 @@ namespace
     const int       VRYO_DASH_SPACING       = 12;
     const int       VRYO_DASH_TILE_WIDTH    = 200;
     const int       VRYO_DASH_MAX_COLUMNS   = 4;
+    const int       VRYO_DASH_GRID_COLUMNS  = 12;
 
     double Clamp01(double value)
     {
@@ -203,6 +204,7 @@ void VryoDashboardPage::BuildUi()
     QVBoxLayout * root = new QVBoxLayout(this);
     root->setContentsMargins(VRYO_DASH_MARGIN, VRYO_DASH_MARGIN, VRYO_DASH_MARGIN, VRYO_DASH_MARGIN);
     root->setSpacing(10);
+    root_layout = root;
 
     /*-----------------------------------------------------*\
     | Header: GPU name, driver version, GPU picker          |
@@ -270,8 +272,7 @@ void VryoDashboardPage::BuildUi()
 
     tiles_grid = new QGridLayout();
     tiles_grid->setSpacing(VRYO_DASH_SPACING);
-    container_layout->addLayout(tiles_grid);
-    container_layout->addStretch(1);
+    container_layout->addLayout(tiles_grid, 1);
 
     scroll->setWidget(tiles_container);
     tiles_container->setAutoFillBackground(false);
@@ -290,11 +291,17 @@ void VryoDashboardPage::BuildUi()
 }
 
 /*---------------------------------------------------------*\
-| Arrange the cards in as many columns as fit               |
+| Arrange the cards so every row is full and the cards      |
+| stretch to fill the window.                               |
+|                                                           |
+| The grid has 12 columns. A row of 4 cards gives each one  |
+| 3 columns, a row of 3 gives each 4, a row of 2 gives each |
+| 6. That is how 7 cards become 4 + 3 on a wide window with |
+| no gap at the end.                                        |
 \*---------------------------------------------------------*/
 void VryoDashboardPage::Reflow()
 {
-    const int usable_width  = width() - (2 * VRYO_DASH_MARGIN);
+    const int usable_width  = width() - (2 * (int)(VRYO_DASH_MARGIN * ((ui_scale > 1.0) ? ui_scale : 1.0)));
     int       wanted        = (usable_width + VRYO_DASH_SPACING) / (VRYO_DASH_TILE_WIDTH + VRYO_DASH_SPACING);
 
     if(wanted < 1)
@@ -319,15 +326,91 @@ void VryoDashboardPage::Reflow()
         tiles_grid->removeWidget(tiles[i]);
     }
 
-    for(size_t i = 0; i < tiles.size(); i++)
+    /*-----------------------------------------------------*\
+    | Spread the cards over as few rows as possible, with   |
+    | the extra cards going to the first rows (4 + 3)       |
+    \*-----------------------------------------------------*/
+    const int tile_count    = (int)tiles.size();
+    const int rows          = (tile_count + columns - 1) / columns;
+    const int base_per_row  = tile_count / rows;
+    const int bigger_rows   = tile_count % rows;
+
+    int tile_index = 0;
+
+    for(int row = 0; row < rows; row++)
     {
-        tiles_grid->addWidget(tiles[i], (int)i / columns, (int)i % columns);
+        const int in_row    = base_per_row + ((row < bigger_rows) ? 1 : 0);
+        int       span      = VRYO_DASH_GRID_COLUMNS / in_row;
+
+        if(span < 1)
+        {
+            span = 1;
+        }
+
+        for(int slot = 0; slot < in_row; slot++)
+        {
+            tiles_grid->addWidget(tiles[tile_index], row, slot * span, 1, span);
+            tile_index++;
+        }
     }
 
-    for(int column = 0; column < VRYO_DASH_MAX_COLUMNS; column++)
+    for(int column = 0; column < VRYO_DASH_GRID_COLUMNS; column++)
     {
-        tiles_grid->setColumnStretch(column, (column < columns) ? 1 : 0);
+        tiles_grid->setColumnStretch(column, 1);
+        tiles_grid->setColumnMinimumWidth(column, 0);
     }
+
+    for(int row = 0; row < (int)tiles.size(); row++)
+    {
+        tiles_grid->setRowStretch(row, (row < rows) ? 1 : 0);
+    }
+}
+
+/*---------------------------------------------------------*\
+| Bigger header, margins and spacing on a big window. The   |
+| cards scale themselves; ordinary text follows the         |
+| application font.                                         |
+\*---------------------------------------------------------*/
+void VryoDashboardPage::ApplyScale()
+{
+    double wanted = (double)width() / 1000.0;
+    const double tall = (double)height() / 560.0;
+
+    if(tall < wanted)
+    {
+        wanted = tall;
+    }
+
+    if(wanted < 1.0)
+    {
+        wanted = 1.0;
+    }
+
+    if(wanted > 1.9)
+    {
+        wanted = 1.9;
+    }
+
+    /*-----------------------------------------------------*\
+    | Only redo the work when the size really changed       |
+    \*-----------------------------------------------------*/
+    if((ui_scale > 0.0) && (wanted > (ui_scale - 0.03)) && (wanted < (ui_scale + 0.03)))
+    {
+        return;
+    }
+
+    ui_scale = wanted;
+
+    const int margin = (int)(VRYO_DASH_MARGIN * ui_scale);
+
+    root_layout->setContentsMargins(margin, margin, margin, margin);
+    root_layout->setSpacing((int)(10.0 * ui_scale));
+    tiles_grid->setSpacing((int)(VRYO_DASH_SPACING * ui_scale));
+
+    QFont name_font = gpu_name_label->font();
+    name_font.setPointSizeF(18.0 * ui_scale);
+    name_font.setWeight(QFont::DemiBold);
+    gpu_name_label->setFont(name_font);
 }
 
 void VryoDashboardPage::StartDriver()
@@ -704,5 +787,6 @@ void VryoDashboardPage::resizeEvent(QResizeEvent * event)
 {
     QWidget::resizeEvent(event);
 
+    ApplyScale();
     Reflow();
 }

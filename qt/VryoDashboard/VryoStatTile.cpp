@@ -28,16 +28,15 @@
 namespace
 {
     const size_t    VRYO_TILE_HISTORY_LENGTH    = 90;
-    const qreal     VRYO_TILE_MARGIN            = 16.0;
-    const qreal     VRYO_TILE_RADIUS            = 14.0;
-
     /*-----------------------------------------------------*\
-    | Room left around the card so the glow, the lift and   |
-    | the pop-in overshoot are not cut off by the widget    |
+    | Everything on the card is drawn for a card of about   |
+    | 224 x 176 pixels and then multiplied by a scale       |
+    | factor, so a big window gets big text and big graphs  |
     \*-----------------------------------------------------*/
-    const qreal     VRYO_TILE_PAD_SIDE          = 6.0;
-    const qreal     VRYO_TILE_PAD_TOP           = 9.0;
-    const qreal     VRYO_TILE_PAD_BOTTOM        = 6.0;
+    const qreal     VRYO_TILE_BASE_WIDTH        = 224.0;
+    const qreal     VRYO_TILE_BASE_HEIGHT       = 176.0;
+    const qreal     VRYO_TILE_SCALE_MIN         = 0.80;
+    const qreal     VRYO_TILE_SCALE_MAX         = 2.60;
 
     QColor Mix(const QColor& from, const QColor& to, qreal amount)
     {
@@ -78,6 +77,7 @@ VryoStatTile::VryoStatTile(const QString& title, QWidget * parent) :
 {
     bar_colour = VryoTheme::HexColor(VryoTheme::VRYO_COLOR_ACCENT);
     setMinimumSize(190, 168);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     hover_anim  = MakeAnimation(&hover_amount);
     press_anim  = MakeAnimation(&press_amount);
@@ -308,25 +308,64 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     | without the mouse on it                               |
     \*-----------------------------------------------------*/
     const qreal glow_strength   = (hover > (alert * 0.8)) ? hover : (alert * 0.8);
-    const qreal border_strength = (hover * 0.85 > alert * 0.75) ? (hover * 0.85) : (alert * 0.75);
+    const qreal border_strength = ((hover * 0.85) > (alert * 0.75)) ? (hover * 0.85) : (alert * 0.75);
     const QColor glow_base      = Mix(accent_colour, bar_colour, alert);
     const QColor border_tint    = Mix(accent_light, bar_colour, alert);
+
+    /*-----------------------------------------------------*\
+    | Room left around the card for the glow, the lift and  |
+    | the pop-in overshoot. It grows a little with size.    |
+    \*-----------------------------------------------------*/
+    qreal pad = (qreal)(width() < height() ? width() : height()) * 0.035;
+
+    if(pad < 6.0)
+    {
+        pad = 6.0;
+    }
+
+    if(pad > 16.0)
+    {
+        pad = 16.0;
+    }
+
+    const QRectF card = QRectF(rect()).adjusted(pad, pad * 1.3, -pad, -pad);
+
+    /*-----------------------------------------------------*\
+    | Scale factor from the size of the card                |
+    \*-----------------------------------------------------*/
+    qreal s = card.width() / VRYO_TILE_BASE_WIDTH;
+
+    if((card.height() / VRYO_TILE_BASE_HEIGHT) < s)
+    {
+        s = card.height() / VRYO_TILE_BASE_HEIGHT;
+    }
+
+    if(s < VRYO_TILE_SCALE_MIN)
+    {
+        s = VRYO_TILE_SCALE_MIN;
+    }
+
+    if(s > VRYO_TILE_SCALE_MAX)
+    {
+        s = VRYO_TILE_SCALE_MAX;
+    }
+
+    const qreal radius  = 14.0 * s;
+    const qreal margin  = 16.0 * s;
 
     /*-----------------------------------------------------*\
     | Pop-in: fade, rise and a slight overshoot in size.    |
     | Press: the card shrinks a little and springs back.    |
     \*-----------------------------------------------------*/
-    const qreal rise    = QEasingCurve(QEasingCurve::OutCubic).valueForProgress(intro);
-    const qreal grow    = QEasingCurve(QEasingCurve::OutBack).valueForProgress(intro);
-    const qreal scale   = (0.90 + (0.10 * grow)) * (1.0 - (0.03 * press_amount));
-    const qreal lift    = (-3.0 * hover) + ((1.0 - rise) * 20.0);
+    const qreal rise        = QEasingCurve(QEasingCurve::OutCubic).valueForProgress(intro);
+    const qreal grow        = QEasingCurve(QEasingCurve::OutBack).valueForProgress(intro);
+    const qreal pop_scale   = (0.90 + (0.10 * grow)) * (1.0 - (0.03 * press_amount));
+    const qreal lift        = (-3.0 * s * hover) + ((1.0 - rise) * 20.0 * s);
 
     painter.setOpacity(Clamp01(intro * 2.2));
 
-    const QRectF card = QRectF(rect()).adjusted(VRYO_TILE_PAD_SIDE, VRYO_TILE_PAD_TOP, -VRYO_TILE_PAD_SIDE, -VRYO_TILE_PAD_BOTTOM);
-
     painter.translate(card.center().x(), card.center().y() + lift);
-    painter.scale(scale, scale);
+    painter.scale(pop_scale, pop_scale);
     painter.translate(-card.center().x(), -card.center().y());
 
     /*-----------------------------------------------------*\
@@ -338,10 +377,12 @@ void VryoStatTile::paintEvent(QPaintEvent *)
 
         for(int ring = 5; ring >= 1; ring--)
         {
+            const qreal grow_by = ring * 1.4 * s;
+
             QColor glow = glow_base;
             glow.setAlpha((int)(30.0 * glow_strength / (qreal)ring));
             painter.setBrush(glow);
-            painter.drawRoundedRect(card.adjusted(-ring * 1.4, -ring * 1.4, ring * 1.4, ring * 1.4), VRYO_TILE_RADIUS + (ring * 1.4), VRYO_TILE_RADIUS + (ring * 1.4));
+            painter.drawRoundedRect(card.adjusted(-grow_by, -grow_by, grow_by, grow_by), radius + grow_by, radius + grow_by);
         }
     }
 
@@ -353,50 +394,41 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     card_gradient.setColorAt(0.0, Mix(panel_colour, surface_colour, 0.45 + (0.35 * hover)));
     card_gradient.setColorAt(1.0, panel_colour);
 
-    painter.setPen(QPen(Mix(border_colour, border_tint, border_strength), 1.0));
+    painter.setPen(QPen(Mix(border_colour, border_tint, border_strength), 1.0 + (0.25 * s)));
     painter.setBrush(card_gradient);
-    painter.drawRoundedRect(card, VRYO_TILE_RADIUS, VRYO_TILE_RADIUS);
+    painter.drawRoundedRect(card, radius, radius);
 
-    const qreal left    = card.left() + VRYO_TILE_MARGIN;
-    const qreal right   = card.right() - VRYO_TILE_MARGIN;
+    const qreal left    = card.left() + margin;
+    const qreal right   = card.right() - margin;
     const qreal inner   = right - left;
 
     /*-----------------------------------------------------*\
     | Title (left) and detail (right)                       |
     \*-----------------------------------------------------*/
+    const qreal title_top       = card.top() + (12.0 * s);
+    const qreal title_height    = 18.0 * s;
+
     QFont small_font = font();
-    small_font.setPointSizeF(8.5);
-    small_font.setLetterSpacing(QFont::AbsoluteSpacing, 0.8);
+    small_font.setPixelSize((int)(11.0 * s));
+    small_font.setLetterSpacing(QFont::AbsoluteSpacing, 0.8 * s);
     painter.setFont(small_font);
     painter.setPen(Mix(muted_colour, text_colour, hover * 0.5));
-    painter.drawText(QRectF(left, card.top() + 12.0, inner, 18.0), Qt::AlignLeft | Qt::AlignVCenter, title_text.toUpper());
+    painter.drawText(QRectF(left, title_top, inner, title_height), Qt::AlignLeft | Qt::AlignVCenter, title_text.toUpper());
 
     if(available && !detail_text.isEmpty())
     {
         QFont detail_font = font();
-        detail_font.setPointSizeF(8.5);
+        detail_font.setPixelSize((int)(11.0 * s));
         painter.setFont(detail_font);
         painter.setPen(muted_colour);
-        painter.drawText(QRectF(left, card.top() + 12.0, inner, 18.0), Qt::AlignRight | Qt::AlignVCenter, detail_text);
+        painter.drawText(QRectF(left, title_top, inner, title_height), Qt::AlignRight | Qt::AlignVCenter, detail_text);
     }
 
     /*-----------------------------------------------------*\
     | Big value with a small unit after it                  |
     \*-----------------------------------------------------*/
-    qreal value_pixels = card.height() * 0.24;
-
-    if(value_pixels < 24.0)
-    {
-        value_pixels = 24.0;
-    }
-
-    if(value_pixels > 42.0)
-    {
-        value_pixels = 42.0;
-    }
-
     QFont value_font = font();
-    value_font.setPixelSize((int)value_pixels);
+    value_font.setPixelSize((int)(36.0 * s));
     value_font.setWeight(QFont::DemiBold);
 
     const QString shown_value = available ? value_text : QStringLiteral("N/A");
@@ -405,7 +437,7 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     painter.setPen(available ? Mix(text_colour, bar_colour.lighter(115), alert * 0.9) : muted_colour);
 
     const QFontMetricsF value_metrics(value_font);
-    const qreal         value_top   = card.top() + 34.0;
+    const qreal         value_top   = card.top() + (32.0 * s);
     const qreal         value_wide  = value_metrics.horizontalAdvance(shown_value);
 
     painter.drawText(QRectF(left, value_top, inner, value_metrics.height()), Qt::AlignLeft | Qt::AlignVCenter, shown_value);
@@ -413,19 +445,19 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     if(available && !unit_text.isEmpty())
     {
         QFont unit_font = font();
-        unit_font.setPixelSize((int)(value_pixels * 0.45));
+        unit_font.setPixelSize((int)(16.0 * s));
         painter.setFont(unit_font);
         painter.setPen(muted_colour);
 
-        painter.drawText(QRectF(left + value_wide + 5.0, value_top, inner - value_wide - 5.0, value_metrics.height()),
+        painter.drawText(QRectF(left + value_wide + (5.0 * s), value_top, inner - value_wide - (5.0 * s), value_metrics.height()),
                          Qt::AlignLeft | Qt::AlignBottom, unit_text);
     }
 
     /*-----------------------------------------------------*\
     | Bar along the bottom                                  |
     \*-----------------------------------------------------*/
-    const qreal bar_height  = 6.0;
-    const QRectF bar_track(left, card.bottom() - VRYO_TILE_MARGIN - bar_height + 2.0, inner, bar_height);
+    const qreal bar_height  = 6.0 * s;
+    const QRectF bar_track(left, card.bottom() - (14.0 * s) - bar_height, inner, bar_height);
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(surface_colour);
@@ -447,12 +479,14 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     }
 
     /*-----------------------------------------------------*\
-    | History graph between the value and the bar           |
+    | History graph between the value and the bar. It takes |
+    | all the room that is left, so a tall card gets a      |
+    | tall graph.                                           |
     \*-----------------------------------------------------*/
-    const qreal graph_top       = value_top + value_metrics.height() + 6.0;
-    const qreal graph_bottom    = bar_track.top() - 12.0;
+    const qreal graph_top       = value_top + value_metrics.height() + (6.0 * s);
+    const qreal graph_bottom    = bar_track.top() - (12.0 * s);
 
-    if(available && (history.size() >= 2) && (graph_bottom - graph_top >= 14.0))
+    if(available && (history.size() >= 2) && ((graph_bottom - graph_top) >= (14.0 * s)))
     {
         const QRectF graph(left, graph_top, inner, graph_bottom - graph_top);
         const qreal  step = graph.width() / (qreal)(VRYO_TILE_HISTORY_LENGTH - 1);
@@ -500,7 +534,7 @@ void VryoStatTile::paintEvent(QPaintEvent *)
         painter.drawPath(area);
 
         painter.setBrush(Qt::NoBrush);
-        painter.setPen(QPen(bar_colour, 1.8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        painter.setPen(QPen(bar_colour, 1.8 * s, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         painter.drawPath(line);
 
         /*-------------------------------------------------*\
@@ -511,9 +545,9 @@ void VryoStatTile::paintEvent(QPaintEvent *)
 
         painter.setPen(Qt::NoPen);
         painter.setBrush(halo);
-        painter.drawEllipse(last_point, 5.5, 5.5);
+        painter.drawEllipse(last_point, 5.5 * s, 5.5 * s);
         painter.setBrush(bar_colour.lighter(130));
-        painter.drawEllipse(last_point, 2.6, 2.6);
+        painter.drawEllipse(last_point, 2.6 * s, 2.6 * s);
     }
 
     /*-----------------------------------------------------*\
@@ -523,7 +557,7 @@ void VryoStatTile::paintEvent(QPaintEvent *)
     if(ripple_active)
     {
         QPainterPath clip;
-        clip.addRoundedRect(card, VRYO_TILE_RADIUS, VRYO_TILE_RADIUS);
+        clip.addRoundedRect(card, radius, radius);
 
         const qreal reach = std::sqrt((card.width() * card.width()) + (card.height() * card.height()));
 

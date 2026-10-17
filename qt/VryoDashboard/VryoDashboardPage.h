@@ -14,6 +14,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QVBoxLayout>
 #include <QTimer>
 #include <QWidget>
 
@@ -55,6 +56,8 @@ private:
     QTimer *                        timer           = nullptr;
     int                             gpu_index       = 0;
     int                             columns         = 0;
+    double                          ui_scale        = 0.0;
+    QVBoxLayout *                   root_layout     = nullptr;
     bool                            driver_tried    = false;
     bool                            intro_played    = false;
 
@@ -73,6 +76,7 @@ private:
     void ShowStatus(const QString& message);
     void ShowHeader();
     void Reflow();
+    void ApplyScale();
     void SetTilesUnavailable();
     void ApplySample(const VryoGpuSample& sample);
     void PlayIntro();
