@@ -220,6 +220,24 @@ namespace VryoTheme
             "QFrame#MainButtonsFrame QToolButton:pressed { background-color: %ACCENT_DARK%; border-color: %ACCENT_DARK%; }"
         );
 
+        /*-------------------------------------------------*\
+        | Presets page: cards, muted text, kind badges and   |
+        | the round power button (blue while it is on)       |
+        \*-------------------------------------------------*/
+        css += QStringLiteral(
+            "QFrame#VryoCard { background-color: %PANEL%; border: 1px solid %BORDER%; border-radius: 14px; }"
+            "QFrame#VryoCard:hover { border-color: %ACCENT_DARK%; }"
+
+            "QLabel#VryoMuted { color: %MUTED%; background: transparent; }"
+            "QLabel#VryoCardTitle { color: %TEXT%; background: transparent; font-size: 15px; font-weight: 600; }"
+            "QLabel#VryoBadge { color: %ACCENT_LIGHT%; background-color: %SURFACE%; border: 1px solid %BORDER%; border-radius: 9px; padding: 2px 10px; font-size: 11px; font-weight: 600; }"
+
+            "QPushButton#VryoPower { background-color: %SURFACE%; color: %MUTED%; border: 1px solid %BORDER%; border-radius: 10px; padding: 8px 18px; font-weight: 600; }"
+            "QPushButton#VryoPower:hover { border-color: %ACCENT_LIGHT%; color: %TEXT%; }"
+            "QPushButton#VryoPower:checked { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT%, stop:1 %ACCENT_DARK%); border: 1px solid %ACCENT_LIGHT%; color: #FFFFFF; }"
+            "QPushButton#VryoPower:checked:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT_LIGHT%, stop:1 %ACCENT%); border-color: #FFFFFF; }"
+        );
+
         css.replace(QStringLiteral("%BACKGROUND%"), QString::fromLatin1(VRYO_COLOR_BACKGROUND));
         css.replace(QStringLiteral("%PANEL%"), QString::fromLatin1(VRYO_COLOR_PANEL));
         css.replace(QStringLiteral("%SURFACE%"), QString::fromLatin1(VRYO_COLOR_SURFACE));

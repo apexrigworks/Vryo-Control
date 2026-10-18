@@ -26,6 +26,8 @@
 #include "OpenRGBSettingsPage.h"
 #include "ManualDevicesSettingsPage/ManualDevicesSettingsPage.h"
 #include "VryoDashboardPage.h"
+#include "VryoDetectOverlay.h"
+#include "VryoPresetsPage.h"
 #include "VryoUiFx.h"
 
 #include "PluginManager.h"
@@ -85,6 +87,8 @@ private:
     | Page pointers                                         |
     \*-----------------------------------------------------*/
     VryoDashboardPage *             DashboardPage       = nullptr;
+    VryoPresetsPage *               PresetsPage         = nullptr;
+    VryoDetectOverlay *             DetectOverlay       = nullptr;
     OpenRGBClientInfoPage *         ClientInfoPage;
     OpenRGBPluginsPage *            PluginsPage;
     OpenRGBSystemInfoPage *         SMBusToolsPage;
@@ -100,6 +104,7 @@ private:
     bool                            force_compact_tabs  = false;
     bool                            ShowI2CTools        = false;
     bool                            plugins_loaded      = false;
+    bool                            rgb_intro_played    = false;
 
     /*-----------------------------------------------------*\
     | Hidden pages                                          |

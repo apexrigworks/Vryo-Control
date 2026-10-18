@@ -343,11 +343,25 @@ OpenRGBDialog::OpenRGBDialog(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     ui->DashboardLayout->addWidget(DashboardPage);
 
     /*-----------------------------------------------------*\
+    | Create the Presets page (third tab)                   |
+    \*-----------------------------------------------------*/
+    PresetsPage     = new VryoPresetsPage(ui->TabPresets);
+    ui->PresetsLayout->addWidget(PresetsPage);
+
+    /*-----------------------------------------------------*\
+    | The "Detecting RGB compatible hardware" screen. It    |
+    | covers the RGB tab and runs the first time that tab   |
+    | is opened in each launch.                             |
+    \*-----------------------------------------------------*/
+    DetectOverlay   = new VryoDetectOverlay(ui->TabDevices);
+
+    /*-----------------------------------------------------*\
     | Click ripple on every button in the app               |
     \*-----------------------------------------------------*/
     VryoUiFx::Install();
 
-    if(ui->MainTabBar->currentWidget() == ui->TabDashboard)
+    if((ui->MainTabBar->currentWidget() == ui->TabDashboard)
+    || (ui->MainTabBar->currentWidget() == ui->TabPresets))
     {
         ui->MainButtonsFrame->setVisible(false);
     }
@@ -1013,7 +1027,7 @@ void OpenRGBDialog::AddClientTab()
     {
         ClientInfoPage = new OpenRGBClientInfoPage();
         ClientInfoPage->setObjectName(QString("SDK Client"));
-        ui->MainTabBar->insertTab(3, ClientInfoPage, tr("SDK Client"));
+        ui->MainTabBar->insertTab(4, ClientInfoPage, tr("SDK Client"));
     }
 }
 
@@ -1026,7 +1040,7 @@ void OpenRGBDialog::AddServerTab()
     {
         OpenRGBServerInfoPage *ServerInfoPage = new OpenRGBServerInfoPage();
         ServerInfoPage->setObjectName(QString("SDK Server"));
-        ui->MainTabBar->insertTab(3, ServerInfoPage, tr("SDK Server"));
+        ui->MainTabBar->insertTab(4, ServerInfoPage, tr("SDK Server"));
     }
 }
 
@@ -1478,6 +1492,14 @@ void OpenRGBDialog::UpdateDevicesList()
     {
         ShowLEDView();
     }
+
+    /*-----------------------------------------------------*\
+    | Let the Presets tab know which devices there are now  |
+    \*-----------------------------------------------------*/
+    if(PresetsPage != nullptr)
+    {
+        PresetsPage->RefreshDevices();
+    }
 }
 
 void OpenRGBDialog::SetLanguage(std::string locale)
@@ -1579,6 +1601,14 @@ void OpenRGBDialog::OnResume()
 {
     plugin_manager->LoadPlugins();
     ResourceManager::get()->GetProfileManager()->LoadAutoProfileResume();
+
+    /*-----------------------------------------------------*\
+    | Queue the power-on animation on the Qt thread         |
+    \*-----------------------------------------------------*/
+    if(PresetsPage != nullptr)
+    {
+        QMetaObject::invokeMethod(PresetsPage, "OnSystemResumed", Qt::QueuedConnection);
+    }
 }
 
 void OpenRGBDialog::on_Exit()
@@ -1670,6 +1700,15 @@ void OpenRGBDialog::onDetectionStarted()
     \*-----------------------------------------------------*/
     bool device_view_showing_prev = device_view_showing;
 
+    /*-----------------------------------------------------*\
+    | The devices are about to be replaced, so stop any     |
+    | preset that is playing on them                        |
+    \*-----------------------------------------------------*/
+    if(PresetsPage != nullptr)
+    {
+        PresetsPage->StopAnimation();
+    }
+
     HideLEDView();
 
     device_view_showing = device_view_showing_prev;
@@ -1726,6 +1765,18 @@ void OpenRGBDialog::onDetectionEnded()
     if(plugins_just_loaded && !open_profile_loaded)
     {
         ResourceManager::get()->GetProfileManager()->ApplyActiveProfilePluginData();
+    }
+
+    /*-----------------------------------------------------*\
+    | Update the Presets tab, then play the start-up        |
+    | animation. This comes last so that the animation      |
+    | hands the devices back to the profile that was just   |
+    | loaded. The start-up animation plays once per launch. |
+    \*-----------------------------------------------------*/
+    if(PresetsPage != nullptr)
+    {
+        PresetsPage->RefreshDevices();
+        PresetsPage->PlayStartupIfWanted();
     }
 }
 
@@ -2438,18 +2489,33 @@ void OpenRGBDialog::on_MainTabBar_currentChanged(int tab_idx)
 
     /*-----------------------------------------------------*\
     | The profile and rescan buttons are lighting controls, |
-    | so keep them off the Dashboard. Plugin tabs manage    |
-    | this button row themselves.                           |
+    | so keep them off the Dashboard and Presets tabs.      |
+    | Plugin tabs manage this button row themselves.        |
     \*-----------------------------------------------------*/
     QWidget* current_tab = ui->MainTabBar->widget(tab_idx);
 
-    if(current_tab == ui->TabDashboard)
+    if((current_tab == ui->TabDashboard) || (current_tab == ui->TabPresets))
     {
         ui->MainButtonsFrame->setVisible(false);
     }
     else if(dynamic_cast<OpenRGBPluginContainer*>(current_tab) == nullptr)
     {
         ui->MainButtonsFrame->setVisible(true);
+    }
+
+    /*-----------------------------------------------------*\
+    | First time the RGB tab is shown in this launch: run   |
+    | the detection screen. It never repeats, however often |
+    | the tabs are switched.                                |
+    \*-----------------------------------------------------*/
+    if((current_tab == ui->TabDevices) && !rgb_intro_played)
+    {
+        rgb_intro_played = true;
+
+        if(DetectOverlay != nullptr)
+        {
+            DetectOverlay->Start();
+        }
     }
 }
 
