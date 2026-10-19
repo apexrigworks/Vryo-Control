@@ -192,6 +192,10 @@ namespace VryoTheme
             "QTabWidget#MainTabBar > QTabBar::tab:selected { color: #FFFFFF; border: 1px solid %ACCENT_LIGHT%; background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT%, stop:1 %ACCENT_DARK%); }"
 
             "QTabWidget#DevicesTabBar > QTabBar::tab { background: %PANEL%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 11px; padding: 6px 12px; margin: 0px 6px 8px 0px; }"
+            /* Vertical device list: Qt pins the icon + name widget to the bottom of the tab,
+               counting a bottom margin as part of the tab. So the gap between cards is a
+               top margin here, which keeps the content inside the card. */
+            "QTabWidget#DevicesTabBar > QTabBar::tab:left { padding: 6px 7px; margin: 8px 6px 0px 0px; }"
             "QTabWidget#DevicesTabBar > QTabBar::tab:hover { border-color: %ACCENT_LIGHT%; }"
             "QTabWidget#DevicesTabBar > QTabBar::tab:selected { border: 1px solid %ACCENT%; background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 %SURFACE%, stop:1 %PANEL%); }"
 
@@ -211,13 +215,52 @@ namespace VryoTheme
             "QScrollArea#DeviceViewBoxFrame { background-color: %PANEL%; border: 1px solid %BORDER%; border-radius: 14px; }"
             "QScrollArea#DeviceViewBoxFrame QWidget#DeviceViewBoxFrameContents { background: transparent; }"
 
-            "QPushButton#ApplyColorsButton, QPushButton#DeviceSaveButton, QPushButton#SetAllButton { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT%, stop:1 %ACCENT_DARK%); border: 1px solid %ACCENT_LIGHT%; color: #FFFFFF; font-weight: 600; padding: 8px 18px; }"
-            "QPushButton#ApplyColorsButton:hover, QPushButton#DeviceSaveButton:hover, QPushButton#SetAllButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT_LIGHT%, stop:1 %ACCENT%); border-color: #FFFFFF; }"
-            "QPushButton#ApplyColorsButton:pressed, QPushButton#DeviceSaveButton:pressed, QPushButton#SetAllButton:pressed { background: %ACCENT_DARK%; border-color: %ACCENT_DARK%; }"
+            "QPushButton#ApplyColorsButton { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT%, stop:1 %ACCENT_DARK%); border: 1px solid %ACCENT_LIGHT%; color: #FFFFFF; font-weight: 600; padding: 8px 14px; }"
+            "QPushButton#ApplyColorsButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT_LIGHT%, stop:1 %ACCENT%); border-color: #FFFFFF; }"
+            "QPushButton#ApplyColorsButton:pressed { background: %ACCENT_DARK%; border-color: %ACCENT_DARK%; }"
+            "QPushButton#ApplyColorsButton:disabled { background: %PANEL%; border: 1px solid %BORDER%; color: %MUTED%; }"
 
             "QFrame#MainButtonsFrame QToolButton { background-color: %SURFACE%; color: %TEXT%; border: 1px solid %BORDER%; border-radius: 10px; padding: 6px 12px; }"
             "QFrame#MainButtonsFrame QToolButton:hover { border-color: %ACCENT_LIGHT%; background-color: %PANEL%; }"
             "QFrame#MainButtonsFrame QToolButton:pressed { background-color: %ACCENT_DARK%; border-color: %ACCENT_DARK%; }"
+        );
+
+        /*-------------------------------------------------*\
+        | RGB page details: group captions, the Per-LED /    |
+        | Mode-Specific / Random choice as pills, slider     |
+        | read-outs, the colour preview and tidy number      |
+        | boxes. Disabled controls are clearly dimmed.       |
+        \*-------------------------------------------------*/
+        css += QStringLiteral(
+            "QLabel#TargetSectionLabel, QLabel#EffectSectionLabel, QLabel#TuningSectionLabel { color: %ACCENT_LIGHT%; background: transparent; font-size: 11px; font-weight: 700; padding-top: 6px; }"
+
+            "QFrame#ControlsFrame QPushButton { padding: 6px 12px; }"
+            "QFrame#ControlsFrame QPushButton#ApplyColorsButton { padding: 8px 14px; }"
+
+            "QRadioButton#PerLEDCheck, QRadioButton#ModeSpecificCheck, QRadioButton#RandomCheck { background-color: %SURFACE%; color: %MUTED%; border: 1px solid %BORDER%; border-radius: 10px; padding: 6px 12px; font-weight: 600; spacing: 0px; }"
+            "QRadioButton#PerLEDCheck::indicator, QRadioButton#ModeSpecificCheck::indicator, QRadioButton#RandomCheck::indicator { width: 0px; height: 0px; margin: 0px; border: none; background: transparent; }"
+            "QRadioButton#PerLEDCheck:hover, QRadioButton#ModeSpecificCheck:hover, QRadioButton#RandomCheck:hover { border-color: %ACCENT_LIGHT%; color: %TEXT%; }"
+            "QRadioButton#PerLEDCheck:checked, QRadioButton#ModeSpecificCheck:checked, QRadioButton#RandomCheck:checked { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %ACCENT%, stop:1 %ACCENT_DARK%); border: 1px solid %ACCENT_LIGHT%; color: #FFFFFF; }"
+            "QRadioButton#PerLEDCheck:disabled, QRadioButton#ModeSpecificCheck:disabled, QRadioButton#RandomCheck:disabled { background-color: %PANEL%; color: %MUTED%; border: 1px solid %BORDER%; }"
+            "QRadioButton#PerLEDCheck:checked:disabled, QRadioButton#ModeSpecificCheck:checked:disabled, QRadioButton#RandomCheck:checked:disabled { background-color: %SURFACE%; color: %TEXT%; border: 1px solid %ACCENT_DARK%; }"
+
+            "QLabel#SpeedValueLabel, QLabel#BrightnessValueLabel { color: %TEXT%; background: transparent; font-weight: 600; }"
+            "QLabel#SpeedValueLabel:disabled, QLabel#BrightnessValueLabel:disabled { color: %MUTED%; }"
+
+            "QFrame#ColorPreviewFrame { background-color: #000000; border: 1px solid %BORDER%; border-radius: 10px; }"
+
+            "QFrame#ColorEntryFrame QSpinBox { padding: 4px 4px; qproperty-alignment: AlignCenter; }"
+            "QFrame#ColorEntryFrame QSpinBox::up-button, QFrame#ColorEntryFrame QSpinBox::down-button { width: 0px; border: none; }"
+            "QLineEdit#HexLineEdit { font-family: Consolas, 'Cascadia Mono', monospace; font-weight: 600; qproperty-alignment: AlignCenter; }"
+        );
+
+        css += QStringLiteral(
+            "QLabel:disabled { color: %MUTED%; }"
+            "QComboBox:disabled { color: %MUTED%; background-color: %PANEL%; border-color: %BORDER%; }"
+            "QSpinBox:disabled, QLineEdit:disabled { color: %MUTED%; }"
+            "QSlider::groove:horizontal:disabled { background: %SURFACE%; }"
+            "QSlider::sub-page:horizontal:disabled { background: %BORDER%; }"
+            "QSlider::handle:horizontal:disabled { background: %MUTED%; border: 3px solid %BORDER%; }"
         );
 
         /*-------------------------------------------------*\

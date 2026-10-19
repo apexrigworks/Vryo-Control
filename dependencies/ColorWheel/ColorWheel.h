@@ -34,18 +34,20 @@ private:
     QPoint lastPos;
     int margin;
     int wheelWidth;
-    const qreal squareGap = 2.0;
+    const qreal squareGap = 5.0;
     QRegion wheelRegion;
     QRegion squareRegion;
     QColor current;
     bool inWheel;
     bool inSquare;
-    int x_offset;
-    int y_offset;
+    int x_offset = 0;
+    int y_offset = 0;
 
     QPixmap CleanWheel;
     QImage CleanSquare;
 
+    qreal squareCornerRadius() const;
+    void squareGeometry(qreal &left, qreal &top, qreal &side) const;
     QColor posColor(const QPoint &point);
     void rebuildCache(const QSize &newSize);
     void drawWheelImage(const QSize &newSize);

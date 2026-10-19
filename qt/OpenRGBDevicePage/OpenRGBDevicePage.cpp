@@ -36,11 +36,48 @@ static void UpdateCallback(void * this_ptr, unsigned int update_reason, void * /
     QMetaObject::invokeMethod(this_obj, "UpdateInterface", Qt::QueuedConnection, Q_ARG(unsigned int, update_reason));
 }
 
+/*---------------------------------------------------------*\
+| Vryo Control: show a slider's position as a percentage    |
+| next to it, and dim the whole row when the slider is off  |
+\*---------------------------------------------------------*/
+static void UpdateSliderReadout(QSlider * slider, QLabel * caption, QLabel * readout)
+{
+    const int range     = slider->maximum() - slider->minimum();
+    int       percent   = 0;
+
+    if(range > 0)
+    {
+        percent = (int)(((100.0 * (double)(slider->value() - slider->minimum())) / (double)range) + 0.5);
+    }
+
+    readout->setText(QString::number(percent) + QStringLiteral("%"));
+
+    caption->setEnabled(slider->isEnabled());
+    readout->setEnabled(slider->isEnabled());
+}
+
 OpenRGBDevicePage::OpenRGBDevicePage(RGBController *dev, QWidget *parent) :
     QFrame(parent),
     ui(new Ui::OpenRGBDevicePage)
 {
     ui->setupUi(this);
+
+    /*-----------------------------------------------------*\
+    | Keep the percentage read-outs next to the Speed and   |
+    | Brightness sliders up to date                         |
+    \*-----------------------------------------------------*/
+    connect(ui->SpeedSlider, &QSlider::valueChanged, this, [this](int)
+    {
+        UpdateSliderReadout(ui->SpeedSlider, ui->SpeedLabel, ui->SpeedValueLabel);
+    });
+
+    connect(ui->BrightnessSlider, &QSlider::valueChanged, this, [this](int)
+    {
+        UpdateSliderReadout(ui->BrightnessSlider, ui->BrightnessLabel, ui->BrightnessValueLabel);
+    });
+
+    UpdateSliderReadout(ui->SpeedSlider, ui->SpeedLabel, ui->SpeedValueLabel);
+    UpdateSliderReadout(ui->BrightnessSlider, ui->BrightnessLabel, ui->BrightnessValueLabel);
 
     /*-----------------------------------------------------*\
     | Store device pointer                                  |
@@ -383,6 +420,11 @@ void OpenRGBDevicePage::UpdateColorUi()
         ui->HexLineEdit->setText(QString().asprintf("%06X", color));
         ui->HexLineEdit->blockSignals(false);
     }
+
+    /*-----------------------------------------------------*\
+    | Update the colour preview strip                       |
+    \*-----------------------------------------------------*/
+    ui->ColorPreviewFrame->setStyleSheet(QString("QFrame#ColorPreviewFrame { background-color: %1; }").arg(QColor(current_color.rgb()).name()));
 }
 
 void OpenRGBDevicePage::UpdateDevice()
@@ -1498,6 +1540,8 @@ void OpenRGBDevicePage::UpdateModeUi()
         ui->SpeedSlider->blockSignals(false);
     }
 
+    UpdateSliderReadout(ui->SpeedSlider, ui->SpeedLabel, ui->SpeedValueLabel);
+
     if(supports_brightness)
     {
         ui->BrightnessSlider->blockSignals(true);
@@ -1530,6 +1574,8 @@ void OpenRGBDevicePage::UpdateModeUi()
         ui->BrightnessSlider->setEnabled(false);
         ui->BrightnessSlider->blockSignals(false);
     }
+
+    UpdateSliderReadout(ui->BrightnessSlider, ui->BrightnessLabel, ui->BrightnessValueLabel);
 
     ui->DirectionBox->blockSignals(true);
     ui->DirectionBox->clear();
@@ -1620,6 +1666,8 @@ void OpenRGBDevicePage::UpdateModeUi()
     {
         ui->DirectionBox->setEnabled(false);
     }
+
+    ui->DirectionLabel->setEnabled(ui->DirectionBox->isEnabled());
 
     ui->DirectionBox->blockSignals(false);
 

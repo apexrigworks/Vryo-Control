@@ -42,10 +42,10 @@ protected:
     void            paintEvent(QPaintEvent *);
 
 private:
-    const int       minSize             = 20;
+    const int       minSize             = 22;
     const int       minRows             = 1;
-    const int       minColumns          = 8;
-    const int       margin              = 2;
+    const int       minColumns          = 10;
+    const int       margin              = 1;
     const float     corner_radius       = 0.0f;
     bool            mouseDown           = false;
     int             selected            = 0;
@@ -60,7 +60,7 @@ private:
     };
 
     swatch          add_swatch;
-    QPen            border_pen      = QColor(128,128,128);  //Grey50
+    QPen            border_pen      = QPen(QColor(255,255,255,56), 1.0);  //faint light edge, so black shows on dark panels
     QVector<swatch> swatch_list;
     QColor          picker_color;
     QSize           initSize;

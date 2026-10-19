@@ -13,14 +13,26 @@
   <property name="windowTitle">
    <string notr="true">Device Page</string>
   </property>
-  <layout class="QGridLayout" name="OpenRGBDevicePageUiGridLayout" rowstretch="0,0" columnstretch="3,0">
+  <layout class="QGridLayout" name="OpenRGBDevicePageUiGridLayout" rowstretch="0,0" columnstretch="3,2">
    <item row="1" column="1">
     <widget class="QFrame" name="ColorFrame">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>285</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>380</width>
+       <height>16777215</height>
+      </size>
      </property>
      <property name="autoFillBackground">
       <bool>true</bool>
@@ -31,8 +43,122 @@
      <property name="frameShadow">
       <enum>QFrame::Shadow::Sunken</enum>
      </property>
-     <layout class="QGridLayout" name="ColorGridLayout" rowstretch="10,0,0,0" columnstretch="0">
-      <item row="2" column="0">
+     <layout class="QVBoxLayout" name="ColorLayout">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <property name="leftMargin">
+       <number>14</number>
+      </property>
+      <property name="topMargin">
+       <number>14</number>
+      </property>
+      <property name="rightMargin">
+       <number>14</number>
+      </property>
+      <property name="bottomMargin">
+       <number>14</number>
+      </property>
+      <item>
+       <widget class="ColorWheel" name="ColorWheelBox" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>1</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>150</width>
+          <height>150</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="ColorPreviewLayout">
+        <property name="spacing">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="QFrame" name="ColorPreviewFrame">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::NoFrame</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="HexLabel">
+          <property name="text">
+           <string>Hex:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="HexLineEdit">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>88</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maxLength">
+           <number>8</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="Swatches" name="SwatchBox" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>24</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>26</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QFrame" name="ColorEntryFrame">
         <property name="frameShape">
          <enum>QFrame::Shape::NoFrame</enum>
@@ -40,7 +166,7 @@
         <property name="frameShadow">
          <enum>QFrame::Shadow::Raised</enum>
         </property>
-        <layout class="QGridLayout" name="ColorEntryGridLayout" columnstretch="0,1,0,1">
+        <layout class="QGridLayout" name="ColorEntryGridLayout" columnstretch="0,1,0,1,0,1">
          <property name="leftMargin">
           <number>0</number>
          </property>
@@ -52,6 +178,12 @@
          </property>
          <property name="bottomMargin">
           <number>0</number>
+         </property>
+         <property name="horizontalSpacing">
+          <number>5</number>
+         </property>
+         <property name="verticalSpacing">
+          <number>6</number>
          </property>
          <item row="0" column="0">
           <widget class="QLabel" name="RedLabel">
@@ -68,30 +200,44 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QLabel" name="HueLabel">
-           <property name="text">
-            <string>H:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QSpinBox" name="HueSpinBox">
-           <property name="maximum">
-            <number>359</number>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
           <widget class="QLabel" name="GreenLabel">
            <property name="text">
             <string>G:</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item row="0" column="3">
           <widget class="QSpinBox" name="GreenSpinBox">
            <property name="maximum">
             <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="4">
+          <widget class="QLabel" name="BlueLabel">
+           <property name="text">
+            <string>B:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="5">
+          <widget class="QSpinBox" name="BlueSpinBox">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="HueLabel">
+           <property name="text">
+            <string>H:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="HueSpinBox">
+           <property name="maximum">
+            <number>359</number>
            </property>
           </widget>
          </item>
@@ -109,75 +255,24 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="BlueLabel">
-           <property name="text">
-            <string>B:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QSpinBox" name="BlueSpinBox">
-           <property name="maximum">
-            <number>255</number>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="2">
+         <item row="1" column="4">
           <widget class="QLabel" name="ValLabel">
            <property name="text">
             <string>V:</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="3">
+         <item row="1" column="5">
           <widget class="QSpinBox" name="ValSpinBox">
            <property name="maximum">
             <number>255</number>
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="HexLabel">
-           <property name="text">
-            <string>Hex:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1" colspan="3">
-          <widget class="QLineEdit" name="HexLineEdit">
-           <property name="maxLength">
-            <number>8</number>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="ColorWheel" name="ColorWheelBox" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="Swatches" name="SwatchBox" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
+      <item>
        <widget class="QPushButton" name="DeviceSaveButton">
         <property name="text">
          <string>Save To Device</string>
@@ -195,6 +290,12 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="minimumSize">
+      <size>
+       <width>340</width>
+       <height>0</height>
+      </size>
+     </property>
      <property name="autoFillBackground">
       <bool>true</bool>
      </property>
@@ -204,128 +305,66 @@
      <property name="frameShadow">
       <enum>QFrame::Shadow::Sunken</enum>
      </property>
-     <layout class="QGridLayout" name="ControlsGridLayout" columnstretch="0,1,1,1">
-      <item row="6" column="0">
-       <widget class="QLabel" name="ColorLabel">
+     <layout class="QGridLayout" name="ControlsGridLayout" columnstretch="0,1,0">
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>12</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>10</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>7</number>
+      </property>
+      <item row="0" column="0" colspan="3">
+       <widget class="QLabel" name="TargetSectionLabel">
         <property name="text">
-         <string>Colors:</string>
+         <string>TARGET</string>
         </property>
        </widget>
       </item>
-      <item row="6" column="2">
-       <widget class="QRadioButton" name="ModeSpecificCheck">
+      <item row="1" column="0">
+       <widget class="QLabel" name="ZoneLabel">
+        <property name="minimumSize">
+         <size>
+          <width>70</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="text">
-         <string>Mode-Specific</string>
+         <string>Zone:</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="1" colspan="3">
-       <widget class="QTooltipedSlider" name="SpeedSlider">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-       </widget>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="ZoneBox"/>
       </item>
-      <item row="0" column="3">
+      <item row="1" column="2">
        <widget class="QPushButton" name="EditButton">
         <property name="text">
          <string>Edit</string>
         </property>
        </widget>
       </item>
-      <item row="9" column="1" colspan="3">
-       <widget class="QTooltipedSlider" name="BrightnessSlider">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="0">
-       <widget class="QLabel" name="DirectionLabel">
-        <property name="text">
-         <string>Dir:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1" colspan="2">
-       <widget class="QPushButton" name="ApplyColorsButton">
-        <property name="text">
-         <string>Apply Colors To Selection</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="ModeLabel">
-        <property name="text">
-         <string>Mode:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="0">
-       <widget class="QLabel" name="BrightnessLabel">
-        <property name="text">
-         <string>Brightness:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="LEDLabel">
         <property name="text">
          <string>LED:</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="ZoneLabel">
-        <property name="text">
-         <string>Zone:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="SpeedLabel">
-        <property name="text">
-         <string>Speed:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="3">
-       <widget class="QRadioButton" name="RandomCheck">
-        <property name="text">
-         <string>Random</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="1" colspan="3">
-       <widget class="QComboBox" name="DirectionBox"/>
-      </item>
-      <item row="4" column="3">
-       <widget class="QPushButton" name="SetAllButton">
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;Sets all devices to&lt;br/&gt;&lt;b&gt;Static&lt;/b&gt; mode and&lt;br/&gt;applies the selected color.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="text">
-         <string>Apply All Devices</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1" colspan="2">
+      <item row="2" column="1">
        <widget class="QComboBox" name="LEDBox"/>
       </item>
-      <item row="5" column="1" colspan="3">
-       <widget class="QComboBox" name="ModeBox"/>
-      </item>
-      <item row="0" column="1" colspan="2">
-       <widget class="QComboBox" name="ZoneBox"/>
-      </item>
-      <item row="6" column="1">
-       <widget class="QRadioButton" name="PerLEDCheck">
-        <property name="text">
-         <string>Per-LED</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
+      <item row="2" column="2">
        <layout class="QVBoxLayout" name="LEDsColorsLayout">
         <item>
          <widget class="QPushButton" name="SelectAllLEDsButton">
@@ -338,6 +377,203 @@
          <widget class="QSpinBox" name="SpinBoxModeColors"/>
         </item>
        </layout>
+      </item>
+      <item row="3" column="0" colspan="3">
+       <layout class="QHBoxLayout" name="ApplyButtonsLayout">
+        <property name="spacing">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="ApplyColorsButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Apply Colors To Selection</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="SetAllButton">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;Sets all devices to&lt;br/&gt;&lt;b&gt;Static&lt;/b&gt; mode and&lt;br/&gt;applies the selected color.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Apply All Devices</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="4" column="0" colspan="3">
+       <widget class="QLabel" name="EffectSectionLabel">
+        <property name="text">
+         <string>EFFECT</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="ModeLabel">
+        <property name="text">
+         <string>Mode:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1" colspan="2">
+       <widget class="QComboBox" name="ModeBox"/>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="ColorLabel">
+        <property name="text">
+         <string>Colors:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1" colspan="2">
+       <layout class="QHBoxLayout" name="ColorModeLayout">
+        <property name="spacing">
+         <number>6</number>
+        </property>
+        <item>
+         <widget class="QRadioButton" name="PerLEDCheck">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Per-LED</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="ModeSpecificCheck">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Mode-Specific</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="RandomCheck">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Random</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="ColorModeSpacer">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item row="7" column="0" colspan="3">
+       <widget class="QLabel" name="TuningSectionLabel">
+        <property name="text">
+         <string>TUNING</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QLabel" name="SpeedLabel">
+        <property name="text">
+         <string>Speed:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QTooltipedSlider" name="SpeedSlider">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="2">
+       <widget class="QLabel" name="SpeedValueLabel">
+        <property name="minimumSize">
+         <size>
+          <width>44</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string notr="true">0%</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QLabel" name="DirectionLabel">
+        <property name="text">
+         <string>Dir:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1" colspan="2">
+       <widget class="QComboBox" name="DirectionBox"/>
+      </item>
+      <item row="10" column="0">
+       <widget class="QLabel" name="BrightnessLabel">
+        <property name="text">
+         <string>Brightness:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="1">
+       <widget class="QTooltipedSlider" name="BrightnessSlider">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="2">
+       <widget class="QLabel" name="BrightnessValueLabel">
+        <property name="minimumSize">
+         <size>
+          <width>44</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string notr="true">0%</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="0" colspan="3">
+       <spacer name="ControlsSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </widget>
@@ -430,6 +666,7 @@
   <tabstop>HueSpinBox</tabstop>
   <tabstop>SatSpinBox</tabstop>
   <tabstop>ValSpinBox</tabstop>
+  <tabstop>HexLineEdit</tabstop>
   <tabstop>DeviceSaveButton</tabstop>
  </tabstops>
  <resources/>

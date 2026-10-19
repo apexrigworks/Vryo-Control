@@ -36,37 +36,27 @@ Swatches::Swatches(QWidget *parent) :
     /*-----------------------------------------------------*\
     | Add default swatches to the list                      |
     \*-----------------------------------------------------*/
-    swatch black_swatch;
-    black_swatch.color.setRgb(0, 0, 0, 255);
-    swatch_list.push_back(black_swatch);
+    const QColor default_colors[10] =
+    {
+        QColor(  0,   0,   0),      // black (lights off)
+        QColor(255, 255, 255),      // white
+        QColor(255,   0,   0),      // red
+        QColor(255, 110,   0),      // orange
+        QColor(255, 220,   0),      // yellow
+        QColor(  0, 255,   0),      // green
+        QColor(  0, 255, 255),      // cyan
+        QColor(  0,   0, 255),      // blue
+        QColor(140,   0, 255),      // violet
+        QColor(255,   0, 200)       // magenta / pink
+    };
 
-    swatch red_swatch;
-    red_swatch.color.setRgb(255, 0, 0, 255);
-    swatch_list.push_back(red_swatch);
-
-    swatch yellow_swatch;
-    yellow_swatch.color.setRgb(255, 255, 0, 255);
-    swatch_list.push_back(yellow_swatch);
-
-    swatch green_swatch;
-    green_swatch.color.setRgb( 0, 255, 0, 255);
-    swatch_list.push_back(green_swatch);
-
-    swatch cyan_swatch;
-    cyan_swatch.color.setRgb( 0, 255, 255, 255);
-    swatch_list.push_back(cyan_swatch);
-
-    swatch blue_swatch;
-    blue_swatch.color.setRgb( 0, 0, 255, 255);
-    swatch_list.push_back(blue_swatch);
-
-    swatch magenta_swatch;
-    magenta_swatch.color.setRgb(255, 0, 255, 255);
-    swatch_list.push_back(magenta_swatch);
-
-    swatch white_swatch;
-    white_swatch.color.setRgb(255, 255, 255, 255);
-    swatch_list.push_back(white_swatch);
+    for(int color_idx = 0; color_idx < 10; color_idx++)
+    {
+        swatch default_swatch;
+        default_swatch.color = default_colors[color_idx];
+        default_swatch.color.setAlpha(255);
+        swatch_list.push_back(default_swatch);
+    }
 
     min_swatches = swatch_list.size();
 }
@@ -159,6 +149,7 @@ void Swatches::drawSwatches(const QSize &newSize)
     | Set up painter                                        |
     \*-----------------------------------------------------*/
     QPainter painter(&swatch_image);
+    painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(border_pen);
 
     /*-----------------------------------------------------*\
@@ -178,8 +169,17 @@ void Swatches::drawSwatches(const QSize &newSize)
         swatch_list[i].region.marginsAdded(QMargins(margin, margin, margin, margin));
         swatch_list[i].region.moveTo(((i % minColumns) * width_inc_margin), ((i / minColumns) * height_inc_margin));
 
+        /*-------------------------------------------------*\
+        | Round dots, centred in their cell                 |
+        \*-------------------------------------------------*/
+        const qreal dot_size = (qreal)((width < height) ? width : height) - 2.0;
+        const QRectF dot(swatch_list[i].region.x() + (((qreal)width - dot_size) / 2.0),
+                         swatch_list[i].region.y() + (((qreal)height - dot_size) / 2.0),
+                         dot_size,
+                         dot_size);
+
         painter.setBrush(brush);
-        painter.drawRect(swatch_list[i].region);
+        painter.drawEllipse(dot);
     }
 
     //QBrush brush(add_swatch.color);
